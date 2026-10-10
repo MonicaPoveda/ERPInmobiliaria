@@ -11,6 +11,7 @@ const AuditPage = lazy(() => import("../pages/AuditPage"))
 const DashboardPage = lazy(() => import("../pages/DashboardPage"))
 const LoginPage = lazy(() => import("../pages/LoginPage"))
 const ModulePage = lazy(() => import("../pages/ModulePage"))
+const OperationsPage = lazy(() => import("../pages/OperationsPage"))
 const SettingsPage = lazy(() => import("../pages/SettingsPage"))
 const UsersPage = lazy(() => import("../pages/UsersPage"))
 
@@ -66,18 +67,10 @@ export const router = createBrowserRouter([
         ),
       },
       {
-        path: "providers",
+        path: "suppliers",
         element: (
-          <Guard module="providers">
-            <ModulePage moduleId="providers" />
-          </Guard>
-        ),
-      },
-      {
-        path: "purchases",
-        element: (
-          <Guard module="purchases">
-            <ModulePage moduleId="purchases" />
+          <Guard module="suppliers">
+            <ModulePage moduleId="suppliers" />
           </Guard>
         ),
       },
@@ -110,6 +103,54 @@ export const router = createBrowserRouter([
         element: (
           <Guard module="billing">
             <ModulePage moduleId="billing" />
+          </Guard>
+        ),
+      },
+      {
+        path: "transactions",
+        element: (
+          <Guard module="transactions">
+            <ModulePage moduleId="transactions" />
+          </Guard>
+        ),
+      },
+      {
+        path: "expenses",
+        element: (
+          <Guard module="expenses">
+            <OperationsPage moduleId="expenses" />
+          </Guard>
+        ),
+      },
+      {
+        path: "movements",
+        element: (
+          <Guard module="movements">
+            <ModulePage moduleId="movements" />
+          </Guard>
+        ),
+      },
+      {
+        path: "kardex",
+        element: (
+          <Guard module="kardex">
+            <ModulePage moduleId="kardex" />
+          </Guard>
+        ),
+      },
+      {
+        path: "payroll",
+        element: (
+          <Guard module="payroll">
+            <OperationsPage moduleId="payroll" />
+          </Guard>
+        ),
+      },
+      {
+        path: "team",
+        element: (
+          <Guard module="team">
+            <OperationsPage moduleId="team" />
           </Guard>
         ),
       },

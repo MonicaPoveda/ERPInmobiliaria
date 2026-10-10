@@ -1,85 +1,137 @@
-import type { Action, ModuleId, Role, StaffProfile, User } from "./types"
+import type { Action, ModuleId, Role, User } from "./types"
 
 type PermissionSet = Partial<Record<ModuleId, Action[]>>
 
 const full: Action[] = ["view", "create", "edit", "delete"]
-const read: Action[] = ["view"]
+
 const manage: Action[] = ["view", "create", "edit"]
-export const permissionMatrix: Record<Role, PermissionSet> & {
-  staffProfiles: Record<StaffProfile, PermissionSet>
-} = {
-  administrator: {
-    dashboard: full,
+
+const read: Action[] = ["view"]
+
+export const permissionMatrix: Record<Role, PermissionSet> = {
+  superAdmin: {
+    dashboard: read,
+
+    inventory: full,
+
+    crm: full,
+
+    contracts: full,
+
+    people: full,
+
+    billing: full,
+
+    portal: full,
+
     security: full,
+
     users: full,
+
     audit: read,
-    settings: ["view", "edit"],
+
+    settings: manage,
+
+    suppliers: full,
+
+    transactions: full,
+
+    expenses: full,
+
+    movements: full,
+
+    kardex: read,
+
+    payroll: full,
+
+    team: full,
   },
-  staff: { dashboard: read },
-  client: {
-    portal: ["view", "create", "edit"],
-    contracts: read,
-    billing: read,
-    inventory: read,
-    settings: ["view", "edit"],
+
+  coordinadorProveedores: {
+    dashboard: read,
+
+    suppliers: full,
   },
-  staffProfiles: {
-    commercial: {
-      dashboard: read,
-      inventory: read,
-      crm: manage,
-      contracts: read,
-    },
-    salesDirector: {
-      dashboard: read,
-      inventory: read,
-      crm: manage,
-      contracts: read,
-    },
-    providers: { dashboard: read, providers: manage },
-    inventory: { dashboard: read, inventory: manage },
-    hr: { dashboard: read, people: full },
-    finance: {
-      dashboard: read,
-      contracts: read,
-      billing: manage,
-      purchases: manage,
-    },
+
+  tesorero: {
+    dashboard: read,
+
+    billing: full,
+
+    transactions: full,
+
+    expenses: full,
+  },
+
+  rrhh: {
+    dashboard: read,
+
+    people: full,
+
+    payroll: full,
+  },
+
+  almacenista: {
+    dashboard: read,
+
+    inventory: ["view", "create", "edit"],
+
+    movements: full,
+
+    kardex: read,
+  },
+
+  asesorComercial: {
+    dashboard: read,
+
+    crm: full,
+  },
+
+  directorComercial: {
+    dashboard: read,
+
+    crm: full,
+
+    team: full,
   },
 }
 
 export function permissionsFor(user: User | null): PermissionSet {
   if (!user) return {}
-  if (user.role === "staff") {
-    return {
-      ...permissionMatrix.staff,
-      ...(user.staffProfile
-        ? permissionMatrix.staffProfiles[user.staffProfile]
-        : {}),
-    }
-  }
-  return permissionMatrix[user.role]
+
+  const rolePermissions = permissionMatrix[user.role]
+
+  if (!user.modulePermissions) return rolePermissions
+
+  return Object.fromEntries(
+    Object.entries(rolePermissions).filter(([module]) =>
+      user.modulePermissions?.includes(module as ModuleId),
+    ),
+  )
 }
 
 export function can(
   user: User | null,
+
   module: ModuleId,
+
   action: Action = "view",
 ) {
   return permissionsFor(user)[module]?.includes(action) ?? false
 }
 
 export const roleLabels: Record<Role, string> = {
-  administrator: "Superadministrador",
-  staff: "Personal Interno",
-  client: "Cliente",
-}
+  superAdmin: "Superadministrador",
 
-export const profileLabels: Record<StaffProfile, string> = {
-  commercial: "Asesor Comercial",
-  salesDirector: "Director Comercial",
-  providers: "Coordinador de Proveedores",
-  inventory: "Jefe de Inventario",
-  hr: "Talento Humano",
-  finance: "Auxiliar Contable / Tesorero",
+  coordinadorProveedores: "Coordinador de Proveedores",
+
+  tesorero: "Tesorero",
+
+  rrhh: "Recursos Humanos",
+
+  almacenista: "Almacenista",
+
+  asesorComercial: "Asesor Comercial",
+
+  directorComercial: "Director Comercial",
 }

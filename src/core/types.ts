@@ -1,16 +1,16 @@
-export type Role = "administrator" | "staff" | "client"
-export type StaffProfile = "commercial" | "salesDirector" | "providers" | "finance" | "hr" | "inventory"
+export type Role = "superAdmin" | "coordinadorProveedores" | "tesorero" | "rrhh" | "almacenista" | "asesorComercial" | "directorComercial"
 export type Action = "view" | "create" | "edit" | "delete"
-export type ModuleId = "dashboard" | "inventory" | "crm" | "contracts" | "people" | "billing" | "portal" | "security" | "users" | "audit" | "settings" | "providers" | "purchases"
+export type ModuleId = "dashboard" | "inventory" | "crm" | "contracts" | "people" | "billing" | "portal" | "security" | "users" | "audit" | "settings" | "suppliers" | "transactions" | "expenses" | "movements" | "kardex" | "payroll" | "team"
+
 export interface User {
   id: string
   name: string
   email: string
   password: string
   role: Role
-  staffProfile?: StaffProfile
   active: boolean
   avatar: string
+  modulePermissions?: ModuleId[]
 }
 
 export type FieldValue = string | number | boolean | undefined

@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react"
 import { NavLink, Outlet, useNavigate } from "react-router"
-import { can, profileLabels, roleLabels } from "../core/permissions"
-import type { ModuleId, StaffProfile } from "../core/types"
+import { can, roleLabels } from "../core/permissions"
+import type { ModuleId, Role } from "../core/types"
 import { useApp } from "../state/AppContext"
 import { Button, ConfirmDialog, Modal } from "./ui"
 
@@ -19,16 +19,11 @@ const navigation: Array<{
   },
   {
     to: "/inventory",
-    label: "Inventario & Activos",
+    label: "Inventario",
     module: "inventory",
     mark: "IN",
   },
-  {
-    to: "/providers",
-    label: "Proveedores",
-    module: "providers",
-    mark: "PR",
-  },
+  { to: "/suppliers", label: "Proveedores", module: "suppliers", mark: "PV" },
   { to: "/crm", label: "CRM & Agenda", module: "crm", mark: "CR" },
   {
     to: "/contracts",
@@ -39,58 +34,26 @@ const navigation: Array<{
   { to: "/people", label: "Talento Humano", module: "people", mark: "TH" },
   { to: "/billing", label: "Facturas & Pagos", module: "billing", mark: "FP" },
   {
-    to: "/purchases",
-    label: "Solicitudes & Compras",
-    module: "purchases",
-    mark: "OC",
+    to: "/transactions",
+    label: "Transacciones",
+    module: "transactions",
+    mark: "TR",
   },
-  { to: "/portal", label: "Portal Cliente", module: "portal", mark: "PC" },
+  { to: "/expenses", label: "Egresos", module: "expenses", mark: "EG" },
+  { to: "/movements", label: "Movimientos", module: "movements", mark: "MV" },
+  { to: "/kardex", label: "Kardex", module: "kardex", mark: "KA" },
+  {
+    to: "/payroll",
+    label: "Novedades y nómina",
+    module: "payroll",
+    mark: "NO",
+  },
+  { to: "/team", label: "Gestión de equipo", module: "team", mark: "EQ" },
   { to: "/security", label: "Seguridad", module: "security", mark: "SG" },
   { to: "/users", label: "Usuarios & Roles", module: "users", mark: "UR" },
   { to: "/audit", label: "Auditoría", module: "audit", mark: "AU" },
   { to: "/settings", label: "Configuración", module: "settings", mark: "CF" },
 ]
-
-const clientLabels: Partial<Record<ModuleId, string>> = {
-  inventory: "Catálogo Inmuebles",
-  contracts: "Mis Contratos",
-  billing: "Estados de Cuenta",
-  portal: "Mis Solicitudes",
-  settings: "Mi Perfil",
-}
-
-const profileNotifications: Record<StaffProfile, string[]> = {
-  commercial: [
-    "3 visitas programadas para hoy",
-    "5 prospectos sin seguimiento",
-    "2 activos nuevos disponibles",
-  ],
-  salesDirector: [
-    "Rendimiento semanal del equipo disponible",
-    "4 oportunidades requieren autorización",
-    "Proyección comercial actualizada",
-  ],
-  providers: [
-    "3 evaluaciones de proveedores pendientes",
-    "2 órdenes de servicio por revisar",
-    "Historial de servicios sincronizado",
-  ],
-  finance: [
-    "8 facturas requieren seguimiento",
-    "3 solicitudes de gasto pendientes",
-    "Flujo de caja actualizado",
-  ],
-  hr: [
-    "Cumpleaños del mes disponibles",
-    "4 contratos próximos a vencer",
-    "2 solicitudes de vacaciones pendientes",
-  ],
-  inventory: [
-    "2 referencias con stock crítico",
-    "3 entradas pendientes de recepción",
-    "Kardex actualizado",
-  ],
-}
 
 export default function AppShell() {
   const { user, logout, notify, sessionWarning, extendSession } = useApp()
@@ -106,29 +69,43 @@ export default function AppShell() {
   )
   if (!user) return null
 
-  const notifications =
-    user.role === "client"
-      ? [
-          "Factura FE-2024-1087 pendiente",
-          "Contrato CT-2024-001 disponible",
-          "Solicitud SOL-002 actualizada",
-        ]
-      : user.staffProfile
-        ? profileNotifications[user.staffProfile]
-        : [
-            "4 contratos vencen este mes",
-            "8 facturas están en mora",
-            "Auditoría institucional al día",
-          ]
+  const notificationsByRole: Record<Role, string[]> = {
+    superAdmin: [
+      "Sistema operativo",
+      "Revisión de seguridad pendiente",
+      "Auditoría institucional al día",
+    ],
+    coordinadorProveedores: [
+      "3 evaluaciones de proveedores pendientes",
+      "Nueva orden de servicio",
+    ],
+    tesorero: [
+      "8 facturas están en mora",
+      "3 solicitudes de egreso pendientes",
+    ],
+    rrhh: [
+      "2 contratos vencen este mes",
+      "4 solicitudes de vacaciones pendientes",
+    ],
+    almacenista: [
+      "2 productos con stock crítico",
+      "Nueva orden de compra recibida",
+    ],
+    asesorComercial: [
+      "3 visitas programadas para hoy",
+      "5 prospectos sin seguimiento",
+    ],
+    directorComercial: [
+      "Proyección comercial actualizada",
+      "2 descuentos esperan autorización",
+    ],
+  }
+  const notifications = notificationsByRole[user.role]
+
   const finishLogout = () => {
     logout()
     notify("Sesión cerrada correctamente.", "success")
     navigate("/login")
-  }
-
-  const labelFor = (item: typeof navigation[number]) => {
-    if (user.role !== "client") return item.label
-    return clientLabels[item.module] ?? item.label
   }
 
   return (
@@ -158,7 +135,7 @@ export default function AppShell() {
               to={item.to}
             >
               <span className="nav-mark">{item.mark}</span>
-              {labelFor(item)}
+              {item.label}
             </NavLink>
           ))}
         </nav>
@@ -242,28 +219,23 @@ export default function AppShell() {
             >
               <span>
                 <strong>{user.name}</strong>
-                <small>
-                  {user.staffProfile
-                    ? profileLabels[user.staffProfile]
-                    : roleLabels[user.role]}
-                </small>
-              </span>
-              <span className={`role-pill role-pill--${user.role}`}>
-                {roleLabels[user.role]}
+                <small>{roleLabels[user.role]}</small>
               </span>
               <span className="avatar">{user.avatar}</span>
             </Button>
             {profileOpen && (
               <div className="popover profile-menu">
-                <Button
-                  onClick={() => {
-                    setProfileOpen(false)
-                    navigate("/settings")
-                  }}
-                  variant="ghost"
-                >
-                  Mi perfil
-                </Button>
+                {can(user, "settings") && (
+                  <Button
+                    onClick={() => {
+                      setProfileOpen(false)
+                      navigate("/settings")
+                    }}
+                    variant="ghost"
+                  >
+                    Mi perfil
+                  </Button>
+                )}
                 <Button
                   onClick={() => {
                     setProfileOpen(false)

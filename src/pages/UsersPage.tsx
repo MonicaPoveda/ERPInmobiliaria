@@ -1,8 +1,13 @@
-import { useEffect, useState, type FormEvent } from "react"
-import type { EntityRecord, StaffProfile } from "../core/types"
-import { profileLabels, roleLabels } from "../core/permissions"
+import { useCallback, useEffect, useState, type FormEvent } from "react"
+
+import type { EntityRecord, ModuleId, Role } from "../core/types"
+
+import { permissionMatrix, roleLabels } from "../core/permissions"
+
 import { repository } from "../data/repository"
+
 import { useApp } from "../state/AppContext"
+
 import {
   Badge,
   Button,
@@ -12,60 +17,287 @@ import {
   Select,
   Spinner,
 } from "../components/ui"
-const profileOptions = [
-  ...Object.values(profileLabels),
-  roleLabels.administrator,
-]
-const staffProfiles: StaffProfile[] = [
-  "commercial",
-  "salesDirector",
-  "providers",
-  "finance",
-  "hr",
-  "inventory",
-]
-function profileKey(
-  label: string,
-): StaffProfile | "administrator" | undefined {
-  if (label === roleLabels.administrator) return "administrator"
-  return staffProfiles.find((profile) => profileLabels[profile] === label)
+
+const roleOptions = Object.keys(roleLabels) as Role[]
+
+const moduleLabels: Partial<Record<ModuleId, string>> = {
+  dashboard: "Panel",
+
+  inventory: "Inventario",
+
+  crm: "Gestión comercial",
+
+  contracts: "Contratos",
+
+  people: "Talento humano",
+
+  billing: "Facturación",
+
+  portal: "Portal",
+
+  security: "Seguridad",
+
+  users: "Usuarios",
+
+  audit: "Auditoría",
+
+  settings: "Configuración",
+
+  suppliers: "Proveedores",
+
+  transactions: "Transacciones",
+
+  expenses: "Egresos",
+
+  movements: "Movimientos",
+
+  kardex: "Kardex",
+
+  payroll: "Nómina",
+
+  team: "Equipo comercial",
 }
 
-function displayRole(record: EntityRecord) {
-  if (record.role === "administrator") return roleLabels.administrator
-  if (record.role === "client") return roleLabels.client
+const modules = Object.keys(moduleLabels) as ModuleId[]
+
+function permissionsFromRecord(record: EntityRecord | "new") {
+  if (record === "new" || typeof record.modulePermissions !== "string")
+    return null
+
+  try {
+    return JSON.parse(record.modulePermissions) as ModuleId[]
+  } catch {
+    return null
+  }
+}
+
+function UserModal({
+  record,
+
+  saving,
+
+  onClose,
+
+  onSave,
+}: {
+  record: EntityRecord | "new"
+
+  saving: boolean
+
+  onClose: () => void
+
+  onSave: (data: Record<string, string | number | boolean>) => void
+}) {
+  const initialRole =
+    record === "new" ? "asesorComercial" : String(record.role) as Role
+
+  const [name, setName] = useState(
+    record === "new" ? "" : String(record.name ?? ""),
+  )
+
+  const [email, setEmail] = useState(
+    record === "new" ? "" : String(record.email ?? ""),
+  )
+
+  const [password, setPassword] = useState("")
+
+  const [role, setRole] = useState<Role>(initialRole)
+
+  const [allowedModules, setAllowedModules] = useState<ModuleId[]>(
+    permissionsFromRecord(record) ??
+      Object.keys(permissionMatrix[initialRole]) as ModuleId[],
+  )
+
+  const selectRole = (nextRole: string) => {
+    const typedRole = nextRole as Role
+
+    setRole(typedRole)
+
+    setAllowedModules(Object.keys(permissionMatrix[typedRole]) as ModuleId[])
+  }
+
+  const submit = (event: FormEvent) => {
+    event.preventDefault()
+
+    if (record === "new" && !password.trim()) return
+
+    const initials = name
+
+      .trim()
+
+      .split(/\s+/)
+
+      .map((part) => part[0])
+
+      .join("")
+
+      .slice(0, 2)
+
+      .toUpperCase()
+
+    onSave({
+      name: name.trim(),
+
+      email: email.trim(),
+
+      role,
+
+      modulePermissions: JSON.stringify(allowedModules),
+
+      ...(record === "new" ? { password, avatar: initials, active: true } : {}),
+    })
+  }
+
   return (
-    Object.entries(profileLabels).find(
-      ([key]) => key === record.staffProfile,
-    )?.[1] ?? roleLabels.staff
+    <Modal
+      onClose={onClose}
+      title={`${record === "new" ? "Crear" : "Editar"} cuenta de usuario`}
+    >
+      <form className="stack" onSubmit={submit}>
+        <div className="form-grid">
+          <Input
+            label="Nombre completo"
+            onChange={(event) => setName(event.target.value)}
+            required
+            value={name}
+          />
+          <Input
+            label="Correo de acceso"
+            onChange={(event) => setEmail(event.target.value)}
+            required
+            type="email"
+            value={email}
+          />
+          {record === "new" && (
+            <Input
+              label="Contraseña inicial"
+              onChange={(event) => setPassword(event.target.value)}
+              required
+              type="password"
+              value={password}
+            />
+          )}
+          <Select
+            label="Perfil de acceso"
+            onChange={(event) =>
+              selectRole(
+                roleOptions.find(
+                  (item) => roleLabels[item] === event.target.value,
+                ) ?? role,
+              )
+            }
+            options={roleOptions.map((item) => roleLabels[item])}
+            value={roleLabels[role]}
+          />
+        </div>
+        <fieldset className="permission-checklist">
+          <legend>Permisos de módulos</legend>
+          <p>
+            El rol establece los límites máximos de acceso. Puedes restringirlos
+            por cuenta.
+          </p>
+          <div className="permission-grid">
+            {modules.map((module) => {
+              const allowedByRole = module in permissionMatrix[role]
+
+              return (
+                <label key={module}>
+                  <input
+                    checked={allowedModules.includes(module)}
+                    disabled={!allowedByRole || module === "dashboard"}
+                    onChange={(event) =>
+                      setAllowedModules((current) =>
+                        event.target.checked
+                          ? [...current, module]
+                          : current.filter((item) => item !== module),
+                      )
+                    }
+                    type="checkbox"
+                  />
+                  {moduleLabels[module]}
+                </label>
+              )
+            })}
+          </div>
+        </fieldset>
+        <div className="modal-actions">
+          <Button onClick={onClose} type="button" variant="secondary">
+            Cancelar
+          </Button>
+          <Button disabled={saving} type="submit">
+            {saving ? "Guardando..." : "Guardar usuario"}
+          </Button>
+        </div>
+      </form>
+    </Modal>
   )
 }
 
 export default function UsersPage() {
   const { user, notify } = useApp()
+
   const [records, setRecords] = useState<EntityRecord[]>([])
+
   const [loading, setLoading] = useState(true)
+
+  const [editing, setEditing] = useState<EntityRecord | "new" | null>(null)
+
   const [selected, setSelected] = useState<EntityRecord | null>(null)
-  const [roleTarget, setRoleTarget] = useState<EntityRecord | null>(null)
-  const [roleSelection, setRoleSelection] = useState(profileOptions[0])
-  const [deleteTarget, setDeleteTarget] = useState<EntityRecord | null>(null)
-  const [createOpen, setCreateOpen] = useState(false)
-  const [name, setName] = useState("")
-  const [email, setEmail] = useState("")
-  const [password, setPassword] = useState("")
-  const [newProfile, setNewProfile] = useState(profileOptions[0])
-  const [busy, setBusy] = useState(false)
-  const load = () =>
-    repository
-      .getAll("users")
-      .then(setRecords)
-      .finally(() => setLoading(false))
+
+  const [deleting, setDeleting] = useState<EntityRecord | null>(null)
+
+  const [saving, setSaving] = useState(false)
+
+  const load = useCallback(async () => {
+    try {
+      setRecords(await repository.getAll("users"))
+    } catch (error) {
+      notify(
+        error instanceof Error
+          ? error.message
+          : "No fue posible cargar los usuarios.",
+        "error",
+      )
+    } finally {
+      setLoading(false)
+    }
+  }, [notify])
+
   useEffect(() => {
     void load()
-  }, [])
+
+    window.addEventListener(repository.eventName, load)
+
+    return () => window.removeEventListener(repository.eventName, load)
+  }, [load])
+
+  const save = async (data: Record<string, string | number | boolean>) => {
+    if (!user) return
+
+    setSaving(true)
+
+    try {
+      if (editing === "new") await repository.create("users", data, user)
+      else if (editing) await repository.update("users", editing.id, data, user)
+
+      setEditing(null)
+
+      notify("Cuenta guardada correctamente.", "success")
+    } catch (error) {
+      notify(
+        error instanceof Error
+          ? error.message
+          : "No fue posible guardar la cuenta.",
+        "error",
+      )
+    } finally {
+      setSaving(false)
+    }
+  }
+
   const toggle = async () => {
     if (!user || !selected) return
-    setBusy(true)
+
     try {
       await repository.update(
         "users",
@@ -73,138 +305,51 @@ export default function UsersPage() {
         { active: !selected.active },
         user,
       )
+
       notify(
         `Usuario ${selected.active ? "suspendido" : "activado"}.`,
         "success",
       )
+
       setSelected(null)
-      await load()
-    } catch (cause) {
+    } catch (error) {
       notify(
-        cause instanceof Error ? cause.message : "No fue posible actualizar.",
+        error instanceof Error
+          ? error.message
+          : "No fue posible cambiar el estado.",
         "error",
       )
-    } finally {
-      setBusy(false)
     }
   }
 
-  const assignRole = async () => {
-    if (!user || !roleTarget) return
-    const profile = profileKey(roleSelection)
-    if (!profile) {
-      notify("Seleccione un rol válido.", "error")
-      return
-    }
-    const data: Record<string, string | number | boolean> = {
-      role: profile === "administrator" ? "administrator" : "staff",
-    }
-    if (profile !== "administrator") data.staffProfile = profile
-    setBusy(true)
-    try {
-      await repository.update("users", roleTarget.id, data, user)
-      notify(`Rol actualizado para ${roleTarget.name}.`, "success")
-      setRoleTarget(null)
-      await load()
-    } catch (cause) {
-      notify(
-        cause instanceof Error
-          ? cause.message
-          : "No fue posible cambiar el rol.",
-        "error",
-      )
-    } finally {
-      setBusy(false)
-    }
-  }
+  const remove = async () => {
+    if (!user || !deleting) return
 
-  const createUser = async (event: FormEvent) => {
-    event.preventDefault()
-    if (!user) return
-    if (
-      records.some(
-        (record) =>
-          String(record.email).toLowerCase() === email.trim().toLowerCase(),
-      )
-    ) {
-      notify("Ya existe una cuenta con ese correo.", "error")
-      return
-    }
-
-    const profile = profileKey(newProfile)
-    if (!profile) {
-      notify("Seleccione un rol válido.", "error")
-      return
-    }
-    const initials = name
-      .trim()
-      .split(/\s+/)
-      .slice(0, 2)
-      .map((part) => part[0]?.toUpperCase() ?? "")
-      .join("")
-    const data: Record<string, string | number | boolean> = {
-      name: name.trim(),
-      email: email.trim(),
-      password,
-      role: profile === "administrator" ? "administrator" : "staff",
-      active: true,
-      avatar: initials,
-    }
-    if (profile !== "administrator") data.staffProfile = profile
-    setBusy(true)
     try {
-      await repository.create("users", data, user)
-      notify("Usuario creado correctamente.", "success")
-      setCreateOpen(false)
-      setName("")
-      setEmail("")
-      setPassword("")
-      await load()
-    } catch (cause) {
-      notify(
-        cause instanceof Error
-          ? cause.message
-          : "No fue posible crear el usuario.",
-        "error",
-      )
-    } finally {
-      setBusy(false)
-    }
-  }
+      await repository.remove("users", deleting.id, user)
 
-  const removeUser = async () => {
-    if (!user || !deleteTarget) return
-    setBusy(true)
-    try {
-      await repository.remove("users", deleteTarget.id, user)
-      notify("La cuenta fue desactivada y auditada.", "success")
-      setDeleteTarget(null)
-      await load()
-    } catch (cause) {
+      setDeleting(null)
+
+      notify("Cuenta eliminada.", "success")
+    } catch (error) {
       notify(
-        cause instanceof Error
-          ? cause.message
+        error instanceof Error
+          ? error.message
           : "No fue posible eliminar la cuenta.",
         "error",
       )
-    } finally {
-      setBusy(false)
     }
   }
+
   return (
     <div className="module-page">
       <section className="module-hero">
         <div>
           <span>ADMINISTRACIÓN DE ACCESOS</span>
-          <h1>Usuarios & Roles</h1>
-          <p>
-            Crea cuentas, asigna uno de los siete perfiles funcionales y
-            suspende accesos. Los permisos se aplican según el rol asignado.
-          </p>
+          <h1>Usuarios y permisos</h1>
+          <p>Creación, suspensión y control de acceso por perfil y módulo.</p>
         </div>
-        <Button onClick={() => setCreateOpen(true)} variant="gold">
-          + Crear usuario
-        </Button>
+        <Button onClick={() => setEditing("new")}>+ Crear usuario</Button>
       </section>
       <section className="data-card">
         {loading ? (
@@ -218,7 +363,8 @@ export default function UsersPage() {
                 <tr>
                   <th>Usuario</th>
                   <th>Correo</th>
-                  <th>Rol asignado</th>
+                  <th>Perfil</th>
+                  <th>Permisos asignados</th>
                   <th>Estado</th>
                   <th>Acciones</th>
                 </tr>
@@ -229,7 +375,15 @@ export default function UsersPage() {
                     <td>{record.name}</td>
                     <td>{record.email}</td>
                     <td>
-                      <Badge>{displayRole(record)}</Badge>
+                      <Badge>
+                        {roleLabels[(String(record.role) as Role)] ??
+                          String(record.role)}
+                      </Badge>
+                    </td>
+                    <td>
+                      {permissionsFromRecord(record)
+                        ?.map((module) => moduleLabels[module])
+                        .join(", ") ?? "Permisos predeterminados del perfil"}
                     </td>
                     <td>
                       <Badge tone={record.active ? "success" : "danger"}>
@@ -238,39 +392,25 @@ export default function UsersPage() {
                     </td>
                     <td>
                       <div className="row-actions">
-                        {record.role !== "client" && record.id !== user?.id && (
-                          <Button
-                            onClick={() => {
-                              setRoleTarget(record)
-                              setRoleSelection(
-                                record.role === "administrator"
-                                  ? roleLabels.administrator
-                                  : (Object.entries(profileLabels).find(
-                                      ([key]) => key === record.staffProfile,
-                                    )?.[1] ?? profileOptions[0]),
-                              )
-                            }}
-                            variant="ghost"
-                          >
-                            Cambiar rol
-                          </Button>
-                        )}
-                        {record.id !== user?.id && (
-                          <Button
-                            onClick={() => setSelected(record)}
-                            variant="ghost"
-                          >
-                            {record.active ? "Suspender" : "Activar"}
-                          </Button>
-                        )}
-                        {record.id !== user?.id && (
-                          <Button
-                            onClick={() => setDeleteTarget(record)}
-                            variant="ghost"
-                          >
-                            Eliminar
-                          </Button>
-                        )}
+                        <Button
+                          onClick={() => setEditing(record)}
+                          variant="ghost"
+                        >
+                          Editar
+                        </Button>
+                        <Button
+                          onClick={() => setSelected(record)}
+                          variant="secondary"
+                        >
+                          {record.active ? "Suspender" : "Activar"}
+                        </Button>
+                        <Button
+                          disabled={record.id === user?.id}
+                          onClick={() => setDeleting(record)}
+                          variant="ghost"
+                        >
+                          Eliminar
+                        </Button>
                       </div>
                     </td>
                   </tr>
@@ -280,9 +420,16 @@ export default function UsersPage() {
           </div>
         )}
       </section>
+      {editing && (
+        <UserModal
+          onClose={() => setEditing(null)}
+          onSave={(data) => void save(data)}
+          record={editing}
+          saving={saving}
+        />
+      )}
       {selected && (
         <ConfirmDialog
-          busy={busy}
           message={`¿Confirma que desea ${
             selected.active ? "suspender" : "activar"
           } a ${selected.name}?`}
@@ -291,86 +438,13 @@ export default function UsersPage() {
           title="Cambiar estado de usuario"
         />
       )}
-      {deleteTarget && (
+      {deleting && (
         <ConfirmDialog
-          busy={busy}
-          message={`La cuenta de ${deleteTarget.name} se desactivará de forma auditada.`}
-          onCancel={() => setDeleteTarget(null)}
-          onConfirm={() => void removeUser()}
-          title="Eliminar cuenta"
+          message={`La cuenta de ${deleting.name} dejará de aparecer en el directorio.`}
+          onCancel={() => setDeleting(null)}
+          onConfirm={() => void remove()}
+          title="Eliminar usuario"
         />
-      )}
-      {roleTarget && (
-        <Modal
-          onClose={() => setRoleTarget(null)}
-          title={`Asignar rol a ${roleTarget.name}`}
-        >
-          <div className="form-grid">
-            <Select
-              label="Rol funcional"
-              onChange={(event) => setRoleSelection(event.target.value)}
-              options={profileOptions}
-              value={roleSelection}
-            />
-          </div>
-          <div className="modal-actions">
-            <Button onClick={() => setRoleTarget(null)} variant="secondary">
-              Cancelar
-            </Button>
-            <Button disabled={busy} onClick={() => void assignRole()}>
-              Guardar rol
-            </Button>
-          </div>
-        </Modal>
-      )}
-      {createOpen && (
-        <Modal onClose={() => setCreateOpen(false)} title="Crear usuario">
-          <form className="record-form" onSubmit={createUser}>
-            <div className="form-grid">
-              <Input
-                label="Nombre completo"
-                onChange={(event) => setName(event.target.value)}
-                required
-                value={name}
-              />
-              <Input
-                autoComplete="email"
-                label="Correo"
-                onChange={(event) => setEmail(event.target.value)}
-                required
-                type="email"
-                value={email}
-              />
-              <Input
-                autoComplete="new-password"
-                label="Contraseña temporal"
-                minLength={8}
-                onChange={(event) => setPassword(event.target.value)}
-                required
-                type="password"
-                value={password}
-              />
-              <Select
-                label="Rol funcional"
-                onChange={(event) => setNewProfile(event.target.value)}
-                options={profileOptions}
-                value={newProfile}
-              />
-            </div>
-            <div className="modal-actions">
-              <Button
-                onClick={() => setCreateOpen(false)}
-                type="button"
-                variant="secondary"
-              >
-                Cancelar
-              </Button>
-              <Button disabled={busy} type="submit">
-                {busy ? "Creando..." : "Crear cuenta"}
-              </Button>
-            </div>
-          </form>
-        </Modal>
       )}
     </div>
   )

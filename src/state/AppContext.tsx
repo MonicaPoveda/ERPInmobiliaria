@@ -8,8 +8,10 @@ import {
   useState,
   type ReactNode,
 } from "react"
-import type { User } from "../core/types"
+import type { ModuleId, Role, User } from "../core/types"
+import { permissionMatrix } from "../core/permissions"
 import { repository } from "../data/repository"
+
 interface ToastMessage {
   id: string
   tone: "success" | "error" | "warning" | "info"
@@ -43,27 +45,14 @@ const AppContext = createContext<AppState | null>(null)
 const SESSION_KEY = "arias-session"
 const LOCAL_KEY = "arias-session-remembered"
 const OTP = "258963"
-const COMPANY_SETTINGS_KEY = "arias-company-settings"
-function inactivityTimeoutMs() {
-  const stored = localStorage.getItem(COMPANY_SETTINGS_KEY)
-  if (!stored) return 15 * 60 * 1000
-  const settings = JSON.parse(stored) as { sessionMinutes: number }
-  if (!Number.isFinite(settings.sessionMinutes) || settings.sessionMinutes < 1)
-    throw new Error("El tiempo de inactividad configurado no es válido.")
-  return settings.sessionMinutes * 60 * 1000
-}
 
 function storedUser() {
   const saved =
     sessionStorage.getItem(SESSION_KEY) ?? localStorage.getItem(LOCAL_KEY)
   if (!saved) return null
-  const parsed = JSON.parse(saved) as { user: User }
-  if (
-    parsed.user.role === "staff" &&
-    (parsed.user.staffProfile as string | undefined) === "legal"
-  )
-    parsed.user.staffProfile = "providers"
-  return parsed.user
+  const parsed = JSON.parse(saved) as { user?: User }
+  if (!parsed.user) return null
+  return parsed.user.role in permissionMatrix ? parsed.user : null
 }
 
 export function AppProvider({ children }: { children: ReactNode }) {
@@ -113,7 +102,65 @@ export function AppProvider({ children }: { children: ReactNode }) {
       await new Promise((resolve) => setTimeout(resolve, 700))
       if (!email.trim() || !password.trim())
         return { ok: false, error: "Complete el correo y la contraseña." }
-      const found = await repository.findUserByEmail(email.trim())
+      let directory
+      try {
+        directory = await repository.getAll("users")
+      } catch (error) {
+        return {
+          ok: false,
+          error:
+            error instanceof Error
+              ? `No fue posible consultar el directorio: ${error.message}`
+              : "No fue posible consultar el directorio de usuarios.",
+        }
+      }
+      const account = directory.find(
+        (item) =>
+          String(item.email).toLowerCase() === email.trim().toLowerCase(),
+      )
+      const roles = Object.keys(permissionMatrix) as Role[]
+      const role =
+        typeof account?.role === "string" &&
+        roles.includes(account.role as Role)
+          ? account.role as Role
+          : undefined
+      let storedPermissions: ModuleId[] | undefined
+      if (typeof account?.modulePermissions === "string") {
+        try {
+          const parsed = JSON.parse(account.modulePermissions) as unknown
+          if (
+            !Array.isArray(parsed) ||
+            parsed.some(
+              (module) =>
+                typeof module !== "string" ||
+                !(module in permissionMatrix.superAdmin),
+            )
+          )
+            return {
+              ok: false,
+              error: "Los permisos de esta cuenta no son válidos.",
+            }
+          storedPermissions = (parsed as ModuleId[])
+        } catch {
+          return {
+            ok: false,
+            error: "No fue posible leer los permisos de esta cuenta.",
+          }
+        }
+      }
+      const found: User | undefined =
+        account && role
+          ? {
+              id: account.id,
+              name: String(account.name ?? ""),
+              email: String(account.email ?? ""),
+              password: String(account.password ?? ""),
+              role,
+              active: account.active === true,
+              avatar: String(account.avatar ?? "AE"),
+              modulePermissions: storedPermissions,
+            }
+          : undefined
       if (!found || found.password !== password)
         return {
           ok: false,
@@ -124,7 +171,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
           ok: false,
           error: "Esta cuenta está inactiva. Contacte al administrador.",
         }
-      if (found.role === "administrator") {
+      if (found.role === "superAdmin") {
         setPendingUser(found)
         setRememberPending(remember)
         return { ok: true, otpRequired: true }
@@ -165,20 +212,19 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   const resetTimers = useCallback(() => {
     if (!user) return
-    const timeout = inactivityTimeoutMs()
     window.clearTimeout(warningTimer.current)
     window.clearTimeout(logoutTimer.current)
     setSessionWarning(false)
     warningTimer.current = window.setTimeout(
       () => setSessionWarning(true),
-      (timeout * 13) / 15,
+      13 * 60 * 1000,
     )
     logoutTimer.current = window.setTimeout(
       () => {
         logout()
         notify("La sesión se cerró por inactividad.", "warning")
       },
-      timeout,
+      15 * 60 * 1000,
     )
   }, [logout, notify, user])
 
