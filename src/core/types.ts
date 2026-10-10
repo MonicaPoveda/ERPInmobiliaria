@@ -36,7 +36,15 @@ export interface AuditEntry {
 export interface FieldConfig {
   key: string
   label: string
-  type?: "text" | "email" | "number" | "date" | "select" | "textarea"
+  type?:
+    | "text"
+    | "email"
+    | "number"
+    | "date"
+    | "select"
+    | "textarea"
+    | "rating"
+    | "image"
   required?: boolean
   options?: string[]
 }

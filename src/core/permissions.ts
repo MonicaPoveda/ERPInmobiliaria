@@ -4,7 +4,6 @@ type PermissionSet = Partial<Record<ModuleId, Action[]>>
 
 const full: Action[] = ["view", "create", "edit", "delete"]
 const read: Action[] = ["view"]
-const manage: Action[] = ["view", "create", "edit"]
 export const permissionMatrix: Record<Role, PermissionSet> & {
   staffProfiles: Record<StaffProfile, PermissionSet>
 } = {
@@ -27,23 +26,23 @@ export const permissionMatrix: Record<Role, PermissionSet> & {
     commercial: {
       dashboard: read,
       inventory: read,
-      crm: manage,
+      crm: full,
       contracts: read,
     },
     salesDirector: {
       dashboard: read,
       inventory: read,
-      crm: manage,
+      crm: full,
       contracts: read,
     },
-    providers: { dashboard: read, providers: manage },
-    inventory: { dashboard: read, inventory: manage },
+    providers: { dashboard: read, providers: full },
+    inventory: { dashboard: read, inventory: full },
     hr: { dashboard: read, people: full },
     finance: {
       dashboard: read,
       contracts: read,
-      billing: manage,
-      purchases: manage,
+      billing: full,
+      purchases: full,
     },
   },
 }

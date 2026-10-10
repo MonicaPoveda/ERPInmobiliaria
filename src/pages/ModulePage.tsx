@@ -58,6 +58,19 @@ function statusTone(
   return "neutral"
 }
 
+function readImageFile(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader()
+    reader.onload = () => {
+      if (typeof reader.result === "string") resolve(reader.result)
+      else reject(new Error("No fue posible leer el archivo de imagen."))
+    }
+    reader.onerror = () =>
+      reject(reader.error ?? new Error("No fue posible leer el archivo de imagen."))
+    reader.readAsDataURL(file)
+  })
+}
+
 function RecordForm({
   config,
   initial,
@@ -88,10 +101,20 @@ function RecordForm({
     const nextErrors: Record<string, string> = {}
     config.fields.forEach((field) => {
       const value = values[field.key]?.trim()
+      if (field.type === "image" && errors[field.key])
+        nextErrors[field.key] = errors[field.key]
       if (field.required && !value)
         nextErrors[field.key] = `${field.label} es obligatorio.`
       if (field.type === "email" && value && !/^\S+@\S+\.\S+$/.test(value))
         nextErrors[field.key] = "Ingrese un correo válido."
+      if (
+        field.type === "rating" &&
+        value &&
+        (!Number.isInteger(Number(value)) ||
+          Number(value) < 1 ||
+          Number(value) > 5)
+      )
+        nextErrors[field.key] = "Seleccione una calificación de 1 a 5 estrellas."
       if (field.type === "number" && value && Number(value) <= 0)
         nextErrors[field.key] = "El valor debe ser mayor que cero."
     })
@@ -101,7 +124,7 @@ function RecordForm({
       Object.fromEntries(
         config.fields.map((field) => [
           field.key,
-          field.type === "number"
+          field.type === "number" || field.type === "rating"
             ? Number(values[field.key])
             : values[field.key],
         ]),
@@ -129,6 +152,105 @@ function RecordForm({
       )
     if (field.type === "textarea")
       return <Textarea key={field.key} rows={4} {...common} />
+    if (field.type === "image")
+      return (
+        <div className="ui-field" key={field.key}>
+          <span>{field.label}</span>
+          {values[field.key] ? (
+            <img
+              alt={`Vista previa de ${initial?.name ?? "la imagen"}`}
+              className="record-image-preview"
+              src={values[field.key]}
+            />
+          ) : (
+            <span className="image-placeholder">Sin imagen seleccionada</span>
+          )}
+          <input
+            accept="image/*"
+            aria-label={field.label}
+            disabled={!editable}
+            onChange={(event) => {
+              const file = event.target.files?.[0]
+              event.target.value = ""
+              if (!file) return
+              if (!file.type.startsWith("image/")) {
+                setErrors((current) => ({
+                  ...current,
+                  [field.key]: "Seleccione un archivo de imagen.",
+                }))
+                return
+              }
+              if (file.size > 1_000_000) {
+                setErrors((current) => ({
+                  ...current,
+                  [field.key]: "La imagen debe pesar máximo 1 MB.",
+                }))
+                return
+              }
+              setErrors((current) => ({ ...current, [field.key]: "" }))
+              void readImageFile(file)
+                .then((image) =>
+                  setValues((current) => ({ ...current, [field.key]: image })),
+                )
+                .catch((cause: unknown) =>
+                  setErrors((current) => ({
+                    ...current,
+                    [field.key]:
+                      cause instanceof Error
+                        ? cause.message
+                        : "No fue posible leer la imagen.",
+                  })),
+                )
+            }}
+            type="file"
+          />
+          {values[field.key] && editable && (
+            <Button
+              onClick={() =>
+                setValues((current) => ({ ...current, [field.key]: "" }))
+              }
+              type="button"
+              variant="ghost"
+            >
+              Quitar imagen
+            </Button>
+          )}
+          {errors[field.key] && <small>{errors[field.key]}</small>}
+          <small>Formatos de imagen, máximo 1 MB.</small>
+        </div>
+      )
+    if (field.type === "rating")
+      return (
+        <div className="ui-field" key={field.key}>
+          <span>{field.label}</span>
+          <div
+            aria-label={field.label}
+            className="rating-input"
+            role="radiogroup"
+          >
+            {[1, 2, 3, 4, 5].map((rating) => (
+              <Button
+                aria-checked={Number(values[field.key]) === rating}
+                aria-label={`${rating} ${rating === 1 ? "estrella" : "estrellas"}`}
+                disabled={!editable}
+                key={rating}
+                onClick={() =>
+                  setValues((current) => ({
+                    ...current,
+                    [field.key]: String(rating),
+                  }))
+                }
+                role="radio"
+                type="button"
+                variant={Number(values[field.key]) >= rating ? "gold" : "ghost"}
+              >
+                ★
+              </Button>
+            ))}
+          </div>
+          {errors[field.key] && <small>{errors[field.key]}</small>}
+        </div>
+      )
     return <Input key={field.key} type={field.type ?? "text"} {...common} />
   }
 
@@ -227,8 +349,10 @@ export default function ModulePage({
     () =>
       records
         .filter((record) => {
-          const matchesQuery = Object.values(record).some((value) =>
-            String(value).toLowerCase().includes(query.toLowerCase()),
+          const matchesQuery = Object.entries(record).some(
+            ([key, value]) =>
+              key !== "image" &&
+              String(value).toLowerCase().includes(query.toLowerCase()),
           )
           const recordStatus = String(
             record.status ?? record.stage ?? record.severity ?? "Sin estado",
@@ -301,6 +425,26 @@ export default function ModulePage({
     }
   }
 
+  const loadExamples = async () => {
+    if (!user) return
+    setBusy(true)
+    try {
+      const count = await repository.loadDemoExamples(config.id, user)
+      if (count)
+        notify(`${count} ejemplos de ${config.singular} cargados.`, "success")
+      else notify("Ya hay registros visibles para este rol.", "info")
+    } catch (cause) {
+      notify(
+        cause instanceof Error
+          ? cause.message
+          : "No fue posible cargar los ejemplos.",
+        "error",
+      )
+    } finally {
+      setBusy(false)
+    }
+  }
+
   const exportCsv = () => {
     const fields = config.fields.map((field) => field.key)
     const rows = [
@@ -308,7 +452,15 @@ export default function ModulePage({
       ...filtered.map((record) =>
         fields
           .map(
-            (field) => `"${String(record[field] ?? "").replace(/"/g, '""')}"`,
+            (field) =>
+              `"${String(
+                config.fields.find((item) => item.key === field)?.type ===
+                "image"
+                  ? record[field]
+                    ? "Imagen adjunta"
+                    : ""
+                  : record[field] ?? "",
+              ).replace(/"/g, '""')}"`,
           )
           .join(","),
       ),
@@ -331,7 +483,7 @@ export default function ModulePage({
     if (!printable)
       return notify("El navegador bloqueó la ventana de impresión.", "warning")
     printable.document.write(
-      `<html><head><title>${config.title}</title><style>body{font-family:Arial;padding:32px}table{width:100%;border-collapse:collapse}th,td{padding:8px;border:1px solid #ddd;text-align:left}</style></head><body><h1>${config.title}</h1><table><thead><tr>${config.fields.map((field) => `<th>${field.label}</th>`).join("")}</tr></thead><tbody>${filtered.map((record) => `<tr>${config.fields.map((field) => `<td>${displayValue(record[field.key])}</td>`).join("")}</tr>`).join("")}</tbody></table></body></html>`,
+      `<html><head><title>${config.title}</title><style>body{font-family:Arial;padding:32px}table{width:100%;border-collapse:collapse}th,td{padding:8px;border:1px solid #ddd;text-align:left}</style></head><body><h1>${config.title}</h1><table><thead><tr>${config.fields.map((field) => `<th>${field.label}</th>`).join("")}</tr></thead><tbody>${filtered.map((record) => `<tr>${config.fields.map((field) => `<td>${field.type === "image" ? (record[field.key] ? "Imagen adjunta" : "Sin imagen") : field.type === "rating" ? `${record[field.key] ?? 0}/5` : displayValue(record[field.key])}</td>`).join("")}</tr>`).join("")}</tbody></table></body></html>`,
     )
     printable.document.close()
     printable.focus()
@@ -433,12 +585,32 @@ export default function ModulePage({
           </div>
         ) : !visible.length ? (
           <div className="state-panel">
-            <strong>No hay resultados</strong>
-            <p>Pruebe otros filtros o registre un nuevo elemento.</p>
-            {can(user, config.id, "create") && (
-              <Button onClick={() => setEditing("new")}>
-                Crear {config.singular}
-              </Button>
+            {records.length === 0 ? (
+              <>
+                <strong>Aún no hay registros para este rol</strong>
+                <p>
+                  Cargue ejemplos de demostración para ver cómo se presenta la
+                  lista en este módulo.
+                </p>
+                <Button disabled={busy} onClick={() => void loadExamples()}>
+                  {busy ? "Cargando ejemplos..." : "Cargar ejemplos demo"}
+                </Button>
+                {can(user, config.id, "create") && (
+                  <Button onClick={() => setEditing("new")} variant="secondary">
+                    Crear {config.singular}
+                  </Button>
+                )}
+              </>
+            ) : (
+              <>
+                <strong>No hay resultados</strong>
+                <p>Pruebe otros filtros o registre un nuevo elemento.</p>
+                {can(user, config.id, "create") && (
+                  <Button onClick={() => setEditing("new")}>
+                    Crear {config.singular}
+                  </Button>
+                )}
+              </>
             )}
           </div>
         ) : (
@@ -479,7 +651,25 @@ export default function ModulePage({
                   <tr key={record.id}>
                     {config.fields.map((field) => (
                       <td key={field.key}>
-                        {["status", "stage", "severity"].includes(field.key) ? (
+                        {field.type === "image" ? (
+                          record[field.key] ? (
+                            <img
+                              alt={`Imagen de ${record.name ?? config.singular}`}
+                              className="record-image-thumbnail"
+                              src={String(record[field.key])}
+                            />
+                          ) : (
+                            <span className="image-placeholder">Sin imagen</span>
+                          )
+                        ) : field.type === "rating" ? (
+                          <span aria-label={`${record[field.key] ?? 0} de 5 estrellas`}>
+                            {"★".repeat(Number(record[field.key] ?? 0))}
+                            {"☆".repeat(5 - Number(record[field.key] ?? 0))}
+                            <small> {record[field.key] ?? 0}/5</small>
+                          </span>
+                        ) : ["status", "stage", "severity"].includes(
+                            field.key,
+                          ) ? (
                           <Badge tone={statusTone(record[field.key])}>
                             {displayValue(record[field.key])}
                           </Badge>

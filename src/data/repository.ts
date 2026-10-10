@@ -21,8 +21,24 @@ function loadDb(): Database {
     for (const module of ["providers", "purchases"]) {
       if (!Array.isArray(db[module])) {
         db[module] = defaults[module]
+
         changed = true
       }
+    }
+    for (const [module, seedRecords] of Object.entries(defaults)) {
+      if (module === "users" || !Array.isArray(db[module])) continue
+      db[module] = db[module].map((record) => {
+        const seedRecord = seedRecords.find(
+          (candidate) => candidate.id === record.id,
+        )
+        if (
+          !seedRecord ||
+          Object.keys(seedRecord).every((key) => key in record)
+        )
+          return record
+        changed = true
+        return { ...seedRecord, ...record }
+      })
     }
     if (Array.isArray(db.users)) {
       const legacyLegalUser = db.users.find(
@@ -123,6 +139,45 @@ export const repository = {
   async getAll(module: ModuleId): Promise<EntityRecord[]> {
     await wait()
     return (loadDb()[module] ?? []).filter((item) => !item.deleted)
+  },
+  async loadDemoExamples(module: ModuleId, actor: User): Promise<number> {
+    await wait()
+    const db = loadDb()
+    const existing = (db[module] ?? []).filter((item) => !item.deleted)
+    const hasVisibleRecords =
+      module === "crm" && actor.staffProfile === "commercial"
+        ? existing.some((item) => item.advisor === actor.name)
+        : existing.length > 0
+    if (hasVisibleRecords) return 0
+
+    const examples = createSeedData()[module] ?? []
+    if (!examples.length)
+      throw new Error("Este módulo no tiene ejemplos de demostración disponibles.")
+
+    const selectedExamples =
+      module === "crm" && actor.staffProfile === "commercial"
+        ? examples.slice(0, 8).map((record) => ({
+            ...record,
+            advisor: actor.name,
+          }))
+        : examples.slice(0, 12)
+    const now = new Date().toISOString()
+    const added = selectedExamples.map((record) => ({
+      ...record,
+      id: crypto.randomUUID(),
+      createdAt: now,
+      updatedAt: now,
+    }))
+    db[module] = [...added, ...(db[module] ?? [])]
+    saveDb(db)
+    log(
+      actor,
+      module,
+      "cargar ejemplos demo",
+      module,
+      `Agregó ${added.length} registros de demostración`,
+    )
+    return added.length
   },
   async findUserByEmail(email: string): Promise<User | undefined> {
     await wait()

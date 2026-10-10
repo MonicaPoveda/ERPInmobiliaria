@@ -135,6 +135,7 @@ export function createSeedData(): Record<string, EntityRecord[]> {
       }-2024-${String(i + 1).padStart(2, "0")}`,
       name: assets[i % assets.length],
       type: i % 3 === 0 ? "Vehículo" : "Inmueble",
+      image: "/assets/2e7dc.png",
       status:
         i % 4 === 0
           ? "Arrendado"
@@ -160,7 +161,7 @@ export function createSeedData(): Record<string, EntityRecord[]> {
         "Negociación",
         "Cierre Ganado",
       ][i % 4],
-      advisor: people[i % 3],
+      advisor: i < 8 ? "Valentina Ríos" : people[i % 3],
       active: true,
     })),
     contracts: records(32, (i) => ({
@@ -214,10 +215,24 @@ export function createSeedData(): Record<string, EntityRecord[]> {
       contact: `Contacto ${i + 1}`,
       email: `proveedor${i + 1}@empresa.com`,
       rut: `900${String(123456 + i * 173).slice(0, 6)}-1`,
-      services: ["Mantenimiento", "Insumos", "Tecnología"][i % 3],
+      phone: `604${String(3001000 + i * 137).slice(0, 7)}`,
+      address: `Calle ${20 + i} # ${10 + (i % 9)}-${i + 1}, Medellín`,
+      category: [
+        "Mantenimiento inmobiliario",
+        "Insumos y materiales",
+        "Tecnología",
+        "Servicios profesionales",
+      ][i % 4],
+      services: [
+        "Mantenimiento preventivo y reparaciones locativas",
+        "Suministro de materiales e insumos",
+        "Soporte técnico y equipos",
+        "Aseo y adecuación de inmuebles",
+      ][i % 4],
       rating: 3 + (i % 3),
       status: i % 5 === 0 ? "Evaluación pendiente" : "Activo",
       lastService: `Servicio ${100 + i}`,
+      evaluationNotes: i % 5 === 0 ? "" : "Entrega y calidad conformes.",
     })),
     purchases: records(20, (i) => ({
       code: `SG-${String(i + 1).padStart(3, "0")}`,
