@@ -12,9 +12,12 @@ const cards: Array<{
   path: string
 }> = [
   { module: "inventory", label: "Activos administrados", path: "/inventory" },
+  { module: "providers", label: "Proveedores registrados", path: "/providers" },
   { module: "crm", label: "Prospectos activos", path: "/crm" },
   { module: "contracts", label: "Contratos vigentes", path: "/contracts" },
+  { module: "people", label: "Colaboradores", path: "/people" },
   { module: "billing", label: "Facturación registrada", path: "/billing" },
+  { module: "purchases", label: "Solicitudes de gasto", path: "/purchases" },
 ]
 
 export default function DashboardPage() {
@@ -27,8 +30,14 @@ export default function DashboardPage() {
     const modules = cards.filter((card) => can(user, card.module))
     const values = await Promise.all(
       modules.map(
-        async (card) =>
-          [card.module, await repository.getAll(card.module)] as const,
+        async (card) => {
+          const records = await repository.getAll(card.module)
+          const visibleRecords =
+            user?.staffProfile === "commercial" && card.module === "crm"
+              ? records.filter((record) => record.advisor === user.name)
+              : records
+          return [card.module, visibleRecords] as const
+        },
       ),
     )
     setData(Object.fromEntries(values))
@@ -48,11 +57,25 @@ export default function DashboardPage() {
   const receivable = billing
     .filter((item) => item.status !== "Pagada")
     .reduce((total, item) => total + Number(item.value ?? 0), 0)
+  const dashboardLabel =
+    user.staffProfile === "commercial"
+      ? "TABLERO COMERCIAL PERSONAL"
+      : user.staffProfile === "salesDirector"
+        ? "RENDIMIENTO DEL EQUIPO COMERCIAL"
+        : user.staffProfile === "finance"
+          ? "PANEL FINANCIERO"
+          : user.staffProfile === "hr"
+            ? "PANEL DE TALENTO HUMANO"
+            : user.staffProfile === "inventory"
+              ? "PANEL DE INVENTARIO"
+              : user.staffProfile === "providers"
+                ? "PANEL DE PROVEEDORES"
+                : "PANEL TÉCNICO Y DE CONTROL"
   return (
     <div className="dashboard-page">
       <section className="welcome-card">
         <div>
-          <span>CONSOLIDADO CORPORATIVO</span>
+          <span>{dashboardLabel}</span>
           <h1>Bienvenido, {user.name.split(" ")[0]}</h1>
           <p>
             Panel operativo de {subtitle}. La información se actualiza con cada
@@ -118,26 +141,25 @@ export default function DashboardPage() {
                   ))}
               </div>
             </article>
-            <article className="summary-card">
-              <span>CARTERA PENDIENTE</span>
-              <strong>
-                {new Intl.NumberFormat("es-CO", {
-                  style: "currency",
-                  currency: "COP",
-                  maximumFractionDigits: 0,
-                }).format(receivable)}
-              </strong>
-              <p>
-                Valor calculado en tiempo real con facturas pendientes y en
-                mora.
-              </p>
-              <Button
-                disabled={!can(user, "billing")}
-                onClick={() => navigate("/billing")}
-              >
-                Gestionar cartera
-              </Button>
-            </article>
+            {can(user, "billing") && (
+              <article className="summary-card">
+                <span>CARTERA PENDIENTE</span>
+                <strong>
+                  {new Intl.NumberFormat("es-CO", {
+                    style: "currency",
+                    currency: "COP",
+                    maximumFractionDigits: 0,
+                  }).format(receivable)}
+                </strong>
+                <p>
+                  Valor calculado en tiempo real con facturas pendientes y en
+                  mora.
+                </p>
+                <Button onClick={() => navigate("/billing")}>
+                  Gestionar cartera
+                </Button>
+              </article>
+            )}
           </section>
         </>
       )}

@@ -4,24 +4,18 @@ type PermissionSet = Partial<Record<ModuleId, Action[]>>
 
 const full: Action[] = ["view", "create", "edit", "delete"]
 const read: Action[] = ["view"]
-
+const manage: Action[] = ["view", "create", "edit"]
 export const permissionMatrix: Record<Role, PermissionSet> & {
   staffProfiles: Record<StaffProfile, PermissionSet>
 } = {
   administrator: {
     dashboard: full,
-    inventory: full,
-    crm: full,
-    contracts: full,
-    people: full,
-    billing: full,
-    portal: full,
     security: full,
     users: full,
     audit: read,
     settings: ["view", "edit"],
   },
-  staff: { dashboard: read, settings: ["view", "edit"] },
+  staff: { dashboard: read },
   client: {
     portal: ["view", "create", "edit"],
     contracts: read,
@@ -33,12 +27,24 @@ export const permissionMatrix: Record<Role, PermissionSet> & {
     commercial: {
       dashboard: read,
       inventory: read,
-      crm: full,
+      crm: manage,
       contracts: read,
     },
-    legal: { dashboard: read, crm: read, contracts: full, security: read },
+    salesDirector: {
+      dashboard: read,
+      inventory: read,
+      crm: manage,
+      contracts: read,
+    },
+    providers: { dashboard: read, providers: manage },
+    inventory: { dashboard: read, inventory: manage },
     hr: { dashboard: read, people: full },
-    finance: { dashboard: read, contracts: ["view", "edit"], billing: full },
+    finance: {
+      dashboard: read,
+      contracts: read,
+      billing: manage,
+      purchases: manage,
+    },
   },
 }
 
@@ -64,14 +70,16 @@ export function can(
 }
 
 export const roleLabels: Record<Role, string> = {
-  administrator: "Administrador",
+  administrator: "Superadministrador",
   staff: "Personal Interno",
   client: "Cliente",
 }
 
 export const profileLabels: Record<StaffProfile, string> = {
   commercial: "Asesor Comercial",
-  legal: "Jurídico",
+  salesDirector: "Director Comercial",
+  providers: "Coordinador de Proveedores",
+  inventory: "Jefe de Inventario",
   hr: "Talento Humano",
-  finance: "Financiero",
+  finance: "Auxiliar Contable / Tesorero",
 }

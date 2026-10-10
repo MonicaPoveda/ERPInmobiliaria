@@ -14,7 +14,35 @@ const wait = (delay = 280) =>
 
 function loadDb(): Database {
   const saved = localStorage.getItem(DB_KEY)
-  if (saved) return JSON.parse(saved) as Database
+  if (saved) {
+    const db = JSON.parse(saved) as Database
+    const defaults = createSeedData()
+    let changed = false
+    for (const module of ["providers", "purchases"]) {
+      if (!Array.isArray(db[module])) {
+        db[module] = defaults[module]
+        changed = true
+      }
+    }
+    if (Array.isArray(db.users)) {
+      const legacyLegalUser = db.users.find(
+        (record) => record.staffProfile === "legal",
+      )
+      if (legacyLegalUser) {
+        legacyLegalUser.staffProfile = "providers"
+        changed = true
+      }
+      for (const user of defaults.users) {
+        if (!db.users.some((record) => record.id === user.id)) {
+          db.users.push(user)
+          changed = true
+        }
+      }
+    }
+    if (changed) localStorage.setItem(DB_KEY, JSON.stringify(db))
+    return db
+  }
+
   const seed = createSeedData()
   localStorage.setItem(DB_KEY, JSON.stringify(seed))
   return seed
@@ -62,11 +90,52 @@ function applyRules(db: Database, module: ModuleId, record: EntityRecord) {
   if (module === "people") record.payroll = "Incluido"
 }
 
+function isUser(record: EntityRecord): record is EntityRecord & User {
+  const validProfiles: string[] = [
+    "commercial",
+    "salesDirector",
+    "providers",
+    "finance",
+    "hr",
+    "inventory",
+  ]
+  const hasValidRole =
+    record.role === "administrator" ||
+    record.role === "staff" ||
+    record.role === "client"
+  const hasValidProfile =
+    record.staffProfile === undefined ||
+    (typeof record.staffProfile === "string" &&
+      validProfiles.includes(record.staffProfile))
+  return (
+    hasValidRole &&
+    hasValidProfile &&
+    typeof record.name === "string" &&
+    typeof record.email === "string" &&
+    typeof record.password === "string" &&
+    typeof record.active === "boolean" &&
+    typeof record.avatar === "string"
+  )
+}
+
 export const repository = {
   eventName: EVENT,
   async getAll(module: ModuleId): Promise<EntityRecord[]> {
     await wait()
     return (loadDb()[module] ?? []).filter((item) => !item.deleted)
+  },
+  async findUserByEmail(email: string): Promise<User | undefined> {
+    await wait()
+    const record = loadDb().users?.find(
+      (item) =>
+        !item.deleted &&
+        typeof item.email === "string" &&
+        item.email.toLowerCase() === email.toLowerCase(),
+    )
+    if (!record) return undefined
+    if (!isUser(record))
+      throw new Error("El registro de usuario no tiene un formato válido.")
+    return record
   },
   async create(
     module: ModuleId,

@@ -66,6 +66,22 @@ export const router = createBrowserRouter([
         ),
       },
       {
+        path: "providers",
+        element: (
+          <Guard module="providers">
+            <ModulePage moduleId="providers" />
+          </Guard>
+        ),
+      },
+      {
+        path: "purchases",
+        element: (
+          <Guard module="purchases">
+            <ModulePage moduleId="purchases" />
+          </Guard>
+        ),
+      },
+      {
         path: "crm",
         element: (
           <Guard module="crm">

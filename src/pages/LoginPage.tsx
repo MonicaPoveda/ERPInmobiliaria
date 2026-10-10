@@ -1,24 +1,58 @@
 import { useState, type FormEvent } from "react"
 import { Navigate, useNavigate } from "react-router"
+import type { StaffProfile } from "../core/types"
 import { demoUsers } from "../data/seed"
 import { useApp } from "../state/AppContext"
 import { Button, Input, Modal } from "../components/ui"
 
+function demoUserForProfile(profile: StaffProfile) {
+  const user = demoUsers.find((candidate) => candidate.staffProfile === profile)
+  if (!user) throw new Error(`No existe usuario demo para el rol ${profile}.`)
+  return user
+}
+
 const roleDemos = [
   {
-    label: "Administración",
-    detail: "Gerencia General, auditoría y control total",
+    label: "Superadministrador / Gerente de TI",
+    detail: "Usuarios, permisos, auditoría y configuración",
+    mark: "SA",
     user: demoUsers[0],
   },
   {
-    label: "Personal Interno",
-    detail: "CRM, agenda e inventario comercial",
+    label: "Asesor Comercial",
+    detail: "Pipeline personal, prospectos y agenda",
+    mark: "AC",
     user: demoUsers[1],
   },
   {
-    label: "Portal Cliente",
-    detail: "Contratos, pagos y solicitudes",
-    user: demoUsers[5],
+    label: "Director Comercial",
+    detail: "Métricas de equipo, reasignación y descuentos",
+    mark: "DC",
+    user: demoUsers[2],
+  },
+  {
+    label: "Coordinador de Proveedores",
+    detail: "Directorio, evaluaciones e historial de servicios",
+    mark: "CP",
+    user: demoUsers[3],
+  },
+  {
+    label: "Auxiliar Contable / Tesorero",
+    detail: "Facturación, recaudos, egresos y flujo de caja",
+    mark: "AT",
+    user: demoUserForProfile("finance"),
+  },
+  {
+    label: "Analista de Recursos Humanos",
+    detail: "Expedientes, novedades y preliquidación",
+    mark: "RH",
+    user: demoUserForProfile("hr"),
+  },
+  {
+    label: "Jefe de Inventario / Almacenista",
+    detail: "Existencias, órdenes de compra y movimientos",
+    mark: "IN",
+    user: demoUserForProfile("inventory"),
   },
 ]
 
@@ -40,6 +74,7 @@ export default function LoginPage() {
 
   const selectDemo = (index: number) => {
     const demo = roleDemos[index]
+    if (!demo) return
     setEmail(demo.user.email)
     setPassword(demo.user.password)
     setSelectedRole(demo.label)
@@ -118,29 +153,50 @@ export default function LoginPage() {
         <div className="role-picker">
           <div className="section-heading">
             <span>ACCESO ASISTIDO</span>
-            <h2>Seleccionar Perfil Corporativo</h2>
+            <h2>Seleccionar rol de acceso</h2>
           </div>
-          <div className="role-grid">
-            {roleDemos.map((demo, index) => (
-              <Button
-                className={
-                  selectedRole === demo.label
-                    ? "role-card role-card--selected"
-                    : "role-card"
-                }
-                key={demo.label}
-                onClick={() => selectDemo(index)}
-                type="button"
-                variant="ghost"
+          <div className="role-selection">
+            <label className="ui-field" htmlFor="login-role">
+              <span>Rol de acceso</span>
+              <select
+                id="login-role"
+                onChange={(event) => {
+                  const index = roleDemos.findIndex(
+                    (demo) => demo.label === event.target.value,
+                  )
+                  if (index >= 0) selectDemo(index)
+                  else {
+                    setSelectedRole("")
+                    setEmail("")
+                    setPassword("")
+                  }
+                }}
+                value={selectedRole}
               >
+                <option value="">Seleccione el rol con el que va a ingresar</option>
+                {roleDemos.map((demo) => (
+                  <option key={demo.label} value={demo.label}>
+                    {demo.label}
+                  </option>
+                ))}
+              </select>
+            </label>
+            {selectedRole && (
+              <div className="role-selection__detail">
                 <span className="role-card__mark">
-                  {index === 0 ? "AD" : index === 1 ? "PI" : "PC"}
+                  {roleDemos.find((demo) => demo.label === selectedRole)?.mark}
                 </span>
-                <strong>{demo.label}</strong>
-                <small>{demo.detail}</small>
-                <b>Cargar perfil →</b>
-              </Button>
-            ))}
+                <div>
+                  <strong>{selectedRole}</strong>
+                  <p>
+                    {
+                      roleDemos.find((demo) => demo.label === selectedRole)
+                        ?.detail
+                    }
+                  </p>
+                </div>
+              </div>
+            )}
           </div>
         </div>
         <form className="login-form" onSubmit={submit}>
@@ -148,11 +204,6 @@ export default function LoginPage() {
             <span>INICIAR SESIÓN SEGURA</span>
             <h2>Ingrese sus credenciales registradas</h2>
           </div>
-          {selectedRole && (
-            <div className="selected-role-banner">
-              Perfil seleccionado: <strong>{selectedRole}</strong>
-            </div>
-          )}
           {error && (
             <div className="form-error" role="alert">
               {error}
@@ -192,7 +243,7 @@ export default function LoginPage() {
             {loading ? "Validando credenciales..." : "Ingresar de forma segura"}
           </Button>
           <p className="demo-note">
-            Modo demostración: seleccione una tarjeta para cargar credenciales.
+            Modo demostración: seleccione un rol para cargar sus credenciales.
           </p>
         </form>
       </section>

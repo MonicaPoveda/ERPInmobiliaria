@@ -9,8 +9,7 @@ import {
   type ReactNode,
 } from "react"
 import type { User } from "../core/types"
-import { demoUsers } from "../data/seed"
-
+import { repository } from "../data/repository"
 interface ToastMessage {
   id: string
   tone: "success" | "error" | "warning" | "info"
@@ -44,12 +43,26 @@ const AppContext = createContext<AppState | null>(null)
 const SESSION_KEY = "arias-session"
 const LOCAL_KEY = "arias-session-remembered"
 const OTP = "258963"
+const COMPANY_SETTINGS_KEY = "arias-company-settings"
+function inactivityTimeoutMs() {
+  const stored = localStorage.getItem(COMPANY_SETTINGS_KEY)
+  if (!stored) return 15 * 60 * 1000
+  const settings = JSON.parse(stored) as { sessionMinutes: number }
+  if (!Number.isFinite(settings.sessionMinutes) || settings.sessionMinutes < 1)
+    throw new Error("El tiempo de inactividad configurado no es válido.")
+  return settings.sessionMinutes * 60 * 1000
+}
 
 function storedUser() {
   const saved =
     sessionStorage.getItem(SESSION_KEY) ?? localStorage.getItem(LOCAL_KEY)
   if (!saved) return null
   const parsed = JSON.parse(saved) as { user: User }
+  if (
+    parsed.user.role === "staff" &&
+    (parsed.user.staffProfile as string | undefined) === "legal"
+  )
+    parsed.user.staffProfile = "providers"
   return parsed.user
 }
 
@@ -100,9 +113,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       await new Promise((resolve) => setTimeout(resolve, 700))
       if (!email.trim() || !password.trim())
         return { ok: false, error: "Complete el correo y la contraseña." }
-      const found = demoUsers.find(
-        (item) => item.email.toLowerCase() === email.trim().toLowerCase(),
-      )
+      const found = await repository.findUserByEmail(email.trim())
       if (!found || found.password !== password)
         return {
           ok: false,
@@ -154,19 +165,20 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   const resetTimers = useCallback(() => {
     if (!user) return
+    const timeout = inactivityTimeoutMs()
     window.clearTimeout(warningTimer.current)
     window.clearTimeout(logoutTimer.current)
     setSessionWarning(false)
     warningTimer.current = window.setTimeout(
       () => setSessionWarning(true),
-      13 * 60 * 1000,
+      (timeout * 13) / 15,
     )
     logoutTimer.current = window.setTimeout(
       () => {
         logout()
         notify("La sesión se cerró por inactividad.", "warning")
       },
-      15 * 60 * 1000,
+      timeout,
     )
   }, [logout, notify, user])
 

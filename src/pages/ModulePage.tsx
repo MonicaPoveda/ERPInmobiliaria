@@ -154,8 +154,25 @@ export default function ModulePage({
 }: {
   moduleId: keyof typeof moduleConfigs
 }) {
-  const config = moduleConfigs[moduleId]
   const { user, notify } = useApp()
+  const baseConfig = moduleConfigs[moduleId]
+  const config = useMemo(() => {
+    if (moduleId === "inventory" && user?.staffProfile === "inventory")
+      return {
+        ...baseConfig,
+        fields: baseConfig.fields.filter(
+          (field) => !["value", "salePrice", "commission"].includes(field.key),
+        ),
+      }
+    if (moduleId === "crm" && user?.staffProfile === "commercial")
+      return {
+        ...baseConfig,
+        fields: baseConfig.fields.filter(
+          (field) => field.key !== "advisor" && field.key !== "discount",
+        ),
+      }
+    return baseConfig
+  }, [baseConfig, moduleId, user?.staffProfile])
   const [records, setRecords] = useState<EntityRecord[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState("")
@@ -177,7 +194,9 @@ export default function ModulePage({
       setRecords(
         user?.role === "client"
           ? data.filter((item) => !item.client || item.client === user.name)
-          : data,
+          : user?.staffProfile === "commercial"
+            ? data.filter((item) => item.advisor === user.name)
+            : data,
       )
     } catch {
       setError("No fue posible cargar los datos. Intente nuevamente.")
@@ -240,12 +259,16 @@ export default function ModulePage({
   const save = async (data: Record<string, string | number | boolean>) => {
     if (!user) return
     setBusy(true)
+    const recordData =
+      moduleId === "crm" && user.staffProfile === "commercial"
+        ? { ...data, advisor: user.name }
+        : data
     try {
       if (editing === "new") {
-        await repository.create(config.id, data, user)
+        await repository.create(config.id, recordData, user)
         notify(`${config.singular} creado correctamente.`, "success")
       } else if (editing) {
-        await repository.update(config.id, editing.id, data, user)
+        await repository.update(config.id, editing.id, recordData, user)
         notify(`${config.singular} actualizado correctamente.`, "success")
       }
       setEditing(null)

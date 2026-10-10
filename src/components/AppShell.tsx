@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react"
 import { NavLink, Outlet, useNavigate } from "react-router"
 import { can, profileLabels, roleLabels } from "../core/permissions"
-import type { ModuleId } from "../core/types"
+import type { ModuleId, StaffProfile } from "../core/types"
 import { useApp } from "../state/AppContext"
 import { Button, ConfirmDialog, Modal } from "./ui"
 
@@ -19,9 +19,15 @@ const navigation: Array<{
   },
   {
     to: "/inventory",
-    label: "Inventarios Activos",
+    label: "Inventario & Activos",
     module: "inventory",
     mark: "IN",
+  },
+  {
+    to: "/providers",
+    label: "Proveedores",
+    module: "providers",
+    mark: "PR",
   },
   { to: "/crm", label: "CRM & Agenda", module: "crm", mark: "CR" },
   {
@@ -32,6 +38,12 @@ const navigation: Array<{
   },
   { to: "/people", label: "Talento Humano", module: "people", mark: "TH" },
   { to: "/billing", label: "Facturas & Pagos", module: "billing", mark: "FP" },
+  {
+    to: "/purchases",
+    label: "Solicitudes & Compras",
+    module: "purchases",
+    mark: "OC",
+  },
   { to: "/portal", label: "Portal Cliente", module: "portal", mark: "PC" },
   { to: "/security", label: "Seguridad", module: "security", mark: "SG" },
   { to: "/users", label: "Usuarios & Roles", module: "users", mark: "UR" },
@@ -45,6 +57,39 @@ const clientLabels: Partial<Record<ModuleId, string>> = {
   billing: "Estados de Cuenta",
   portal: "Mis Solicitudes",
   settings: "Mi Perfil",
+}
+
+const profileNotifications: Record<StaffProfile, string[]> = {
+  commercial: [
+    "3 visitas programadas para hoy",
+    "5 prospectos sin seguimiento",
+    "2 activos nuevos disponibles",
+  ],
+  salesDirector: [
+    "Rendimiento semanal del equipo disponible",
+    "4 oportunidades requieren autorización",
+    "Proyección comercial actualizada",
+  ],
+  providers: [
+    "3 evaluaciones de proveedores pendientes",
+    "2 órdenes de servicio por revisar",
+    "Historial de servicios sincronizado",
+  ],
+  finance: [
+    "8 facturas requieren seguimiento",
+    "3 solicitudes de gasto pendientes",
+    "Flujo de caja actualizado",
+  ],
+  hr: [
+    "Cumpleaños del mes disponibles",
+    "4 contratos próximos a vencer",
+    "2 solicitudes de vacaciones pendientes",
+  ],
+  inventory: [
+    "2 referencias con stock crítico",
+    "3 entradas pendientes de recepción",
+    "Kardex actualizado",
+  ],
 }
 
 export default function AppShell() {
@@ -68,18 +113,13 @@ export default function AppShell() {
           "Contrato CT-2024-001 disponible",
           "Solicitud SOL-002 actualizada",
         ]
-      : user.staffProfile === "commercial"
-        ? [
-            "3 visitas programadas para hoy",
-            "5 prospectos sin seguimiento",
-            "2 activos nuevos disponibles",
-          ]
+      : user.staffProfile
+        ? profileNotifications[user.staffProfile]
         : [
             "4 contratos vencen este mes",
             "8 facturas están en mora",
             "Auditoría institucional al día",
           ]
-
   const finishLogout = () => {
     logout()
     notify("Sesión cerrada correctamente.", "success")
