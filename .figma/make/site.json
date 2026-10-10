@@ -1,0 +1,10 @@
+{
+  "description": "Streamlines user access with role-based login directing to tailored dashboards and offers seamless navigation across inventory, CRM, contracts, HR, and billing modules.",
+  "robots": {
+    "index": false
+  },
+  "accessibility": {
+    "addBypassLinks": false,
+    "ignoreReducedMotion": false
+  }
+}
