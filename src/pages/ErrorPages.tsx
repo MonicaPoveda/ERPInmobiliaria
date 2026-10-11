@@ -38,7 +38,7 @@ export default function NotFoundPage() {
   return (
     <ErrorPage
       code="404"
-      text="La dirección solicitada no existe en Arias Empire."
+      text="La dirección solicitada no existe en Vesta ERP."
       title="Página no encontrada"
     />
   )

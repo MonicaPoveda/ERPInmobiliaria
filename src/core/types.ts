@@ -1,6 +1,6 @@
 export type Role = "superAdmin" | "coordinadorProveedores" | "tesorero" | "rrhh" | "almacenista" | "asesorComercial" | "directorComercial"
 export type Action = "view" | "create" | "edit" | "delete"
-export type ModuleId = "dashboard" | "inventory" | "crm" | "contracts" | "people" | "billing" | "portal" | "security" | "users" | "audit" | "settings" | "suppliers" | "transactions" | "expenses" | "movements" | "kardex" | "payroll" | "team"
+export type ModuleId = "dashboard" | "inventory" | "crm" | "contracts" | "people" | "billing" | "portal" | "security" | "users" | "audit" | "settings" | "suppliers" | "transactions" | "expenses" | "movements" | "kardex" | "payroll" | "team" | "catalogo"
 
 export interface User {
   id: string

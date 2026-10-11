@@ -29,7 +29,7 @@ const imgContainer18 = `${assetPathPrefix}/52b32.svg`
 const imgContainer19 = `${assetPathPrefix}/b75f0.svg`
 const imgContainer20 = `${assetPathPrefix}/26fd0.svg`
 
-export default function TalentoHumanoNominaAriasEmpire() {
+export default function TalentoHumanoNominaVestaERP() {
   return (
     <div
       className="content-stretch flex flex-col items-start pl-[256px] relative size-full"
@@ -38,7 +38,7 @@ export default function TalentoHumanoNominaAriasEmpire() {
         backgroundImage:
           "linear-gradient(90deg, rgb(248, 249, 255) 0%, rgb(248, 249, 255) 100%), linear-gradient(90deg, rgb(255, 255, 255) 0%, rgb(255, 255, 255) 100%)",
       }}
-      data-name="Talento Humano & Nómina - Arias Empire"
+      data-name="Talento Humano & Nómina - Vesta ERP"
     >
       <div
         className="bg-[#f8f9ff] content-stretch flex flex-col items-start min-h-[800px] pb-[24px] pt-[64px] px-[24px] relative shrink-0 w-full"
@@ -3432,7 +3432,7 @@ export default function TalentoHumanoNominaAriasEmpire() {
                       con firma hash SHA-256 en el Ledger Central
                     </p>
                     <p className="leading-[19.5px] mb-0">
-                      inmutable de Arias Empire. Cumplimiento Ley
+                      inmutable de Vesta ERP. Cumplimiento Ley
                     </p>
                     <p className="leading-[19.5px]">1581 de 2012.</p>
                   </div>
@@ -3493,7 +3493,7 @@ export default function TalentoHumanoNominaAriasEmpire() {
             <div
               className="h-[32px] max-w-[186.4199981689453px] relative shrink-0 w-[104.94px]"
               data-node-id="1:3874"
-              data-name="Arias Empire Logo"
+              data-name="Vesta ERP Logo"
             />
             <div
               className="content-stretch flex flex-col items-start pr-[16.17px] relative shrink-0"
@@ -3504,7 +3504,7 @@ export default function TalentoHumanoNominaAriasEmpire() {
                 className="[word-break:break-word] flex flex-col font-['Inter:Bold'] font-bold justify-center leading-[0] not-italic relative shrink-0 text-[#0b1c30] text-[16px] tracking-[-0.4px] uppercase whitespace-nowrap"
                 data-node-id="1:3876"
               >
-                <p className="leading-[24px] mb-0">ARIAS</p>
+                <p className="leading-[24px] mb-0">VESTA</p>
                 <p className="leading-[24px]">EMPIRE</p>
               </div>
             </div>
@@ -3721,7 +3721,7 @@ export default function TalentoHumanoNominaAriasEmpire() {
                 className="[word-break:break-word] flex flex-col font-['Inter:Semi_Bold'] font-semibold justify-center leading-[0] not-italic relative shrink-0 text-[#ffdf98] text-[12px] tracking-[0.6px] uppercase whitespace-nowrap"
                 data-node-id="1:3910"
               >
-                <p className="leading-[16px]">ARIAS ERP CORE</p>
+                <p className="leading-[16px]">VESTA ERP</p>
               </div>
             </div>
           </div>

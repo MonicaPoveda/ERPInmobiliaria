@@ -9,7 +9,7 @@ import { Button, ConfirmDialog, Input, Select } from "../components/ui"
 const COMPANY_SETTINGS_KEY = "arias-company-settings"
 
 const defaultCompanySettings = {
-  name: "Arias Empire",
+  name: "Vesta ERP",
 
   nit: "",
 

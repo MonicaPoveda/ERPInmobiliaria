@@ -1532,7 +1532,7 @@ export default function InventarioDeInmueblesYVehiculosCrud() {
                           className="[word-break:break-word] flex flex-col font-['Inter:Semi_Bold'] font-semibold justify-center leading-[0] not-italic relative shrink-0 text-[#0b1c30] text-[13px] w-full"
                           data-node-id="1:245"
                         >
-                          <p className="leading-[18px] mb-0">Arias Fleet</p>
+                          <p className="leading-[18px] mb-0">Vesta Fleet</p>
                           <p className="leading-[18px] mb-0">Corporation</p>
                           <p className="leading-[18px]">S.A.S.</p>
                         </div>
@@ -2432,7 +2432,7 @@ export default function InventarioDeInmueblesYVehiculosCrud() {
             <div
               className="h-[32px] max-w-[186.4199981689453px] relative shrink-0 w-[104.94px]"
               data-node-id="1:390"
-              data-name="Arias Empire Logo"
+              data-name="Vesta ERP Logo"
             />
             <div
               className="content-stretch flex flex-col items-start pr-[16.17px] relative shrink-0"
@@ -2443,7 +2443,7 @@ export default function InventarioDeInmueblesYVehiculosCrud() {
                 className="[word-break:break-word] flex flex-col font-['Inter:Bold'] font-bold justify-center leading-[0] not-italic relative shrink-0 text-[#0b1c30] text-[16px] tracking-[-0.4px] uppercase whitespace-nowrap"
                 data-node-id="1:392"
               >
-                <p className="leading-[24px] mb-0">ARIAS</p>
+                <p className="leading-[24px] mb-0">VESTA</p>
                 <p className="leading-[24px]">EMPIRE</p>
               </div>
             </div>
@@ -2660,7 +2660,7 @@ export default function InventarioDeInmueblesYVehiculosCrud() {
                 className="[word-break:break-word] flex flex-col font-['Inter:Semi_Bold'] font-semibold justify-center leading-[0] not-italic relative shrink-0 text-[#ffdf98] text-[12px] tracking-[0.6px] uppercase whitespace-nowrap"
                 data-node-id="1:426"
               >
-                <p className="leading-[16px]">ARIAS ERP CORE</p>
+                <p className="leading-[16px]">VESTA ERP</p>
               </div>
             </div>
           </div>

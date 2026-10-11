@@ -27,6 +27,8 @@ const moduleLabels: Partial<Record<ModuleId, string>> = {
 
   crm: "Gestión comercial",
 
+  catalogo: "Catálogo de Inmuebles",
+
   contracts: "Contratos",
 
   people: "Talento humano",

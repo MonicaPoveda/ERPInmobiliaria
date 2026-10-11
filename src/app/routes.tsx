@@ -12,6 +12,7 @@ const DashboardPage = lazy(() => import("../pages/DashboardPage"))
 const LoginPage = lazy(() => import("../pages/LoginPage"))
 const ModulePage = lazy(() => import("../pages/ModulePage"))
 const OperationsPage = lazy(() => import("../pages/OperationsPage"))
+const PropertyCatalog = lazy(() => import("../pages/PropertyCatalog"))
 const SettingsPage = lazy(() => import("../pages/SettingsPage"))
 const UsersPage = lazy(() => import("../pages/UsersPage"))
 
@@ -79,6 +80,14 @@ export const router = createBrowserRouter([
         element: (
           <Guard module="crm">
             <ModulePage moduleId="crm" />
+          </Guard>
+        ),
+      },
+      {
+        path: "catalogo",
+        element: (
+          <Guard module="catalogo">
+            <PropertyCatalog />
           </Guard>
         ),
       },

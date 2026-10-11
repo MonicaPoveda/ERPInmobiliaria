@@ -35,7 +35,7 @@ const imgContainer19 = `${assetPathPrefix}/bc902.svg`
 const imgContainer20 = `${assetPathPrefix}/b75f0.svg`
 const imgContainer21 = `${assetPathPrefix}/26fd0.svg`
 
-export default function FacturacionRecaudosPagosAriasEmpire() {
+export default function FacturacionRecaudosPagosVestaERP() {
   return (
     <div
       className="content-stretch flex flex-col items-start pl-[256px] pr-[13.47px] relative size-full"
@@ -44,7 +44,7 @@ export default function FacturacionRecaudosPagosAriasEmpire() {
         backgroundImage:
           "linear-gradient(90deg, rgb(248, 249, 255) 0%, rgb(248, 249, 255) 100%), linear-gradient(90deg, rgb(255, 255, 255) 0%, rgb(255, 255, 255) 100%)",
       }}
-      data-name="Facturación, Recaudos & Pagos - Arias Empire"
+      data-name="Facturación, Recaudos & Pagos - Vesta ERP"
     >
       <div
         className="bg-[#f8f9ff] content-stretch flex flex-col items-start min-h-[800px] pb-[24px] pt-[64px] px-[24px] relative shrink-0 w-full"
@@ -3965,7 +3965,7 @@ export default function FacturacionRecaudosPagosAriasEmpire() {
             <div
               className="h-[32px] max-w-[186.4199981689453px] relative shrink-0 w-[104.94px]"
               data-node-id="1:4600"
-              data-name="Arias Empire Logo"
+              data-name="Vesta ERP Logo"
             />
             <div
               className="content-stretch flex flex-col items-start pr-[16.17px] relative shrink-0"
@@ -3976,7 +3976,7 @@ export default function FacturacionRecaudosPagosAriasEmpire() {
                 className="[word-break:break-word] flex flex-col font-['Inter:Bold'] font-bold justify-center leading-[0] not-italic relative shrink-0 text-[#0b1c30] text-[16px] tracking-[-0.4px] uppercase whitespace-nowrap"
                 data-node-id="1:4602"
               >
-                <p className="leading-[24px] mb-0">ARIAS</p>
+                <p className="leading-[24px] mb-0">VESTA</p>
                 <p className="leading-[24px]">EMPIRE</p>
               </div>
             </div>
@@ -4193,7 +4193,7 @@ export default function FacturacionRecaudosPagosAriasEmpire() {
                 className="[word-break:break-word] flex flex-col font-['Inter:Semi_Bold'] font-semibold justify-center leading-[0] not-italic relative shrink-0 text-[#ffdf98] text-[12px] tracking-[0.6px] uppercase whitespace-nowrap"
                 data-node-id="1:4636"
               >
-                <p className="leading-[16px]">ARIAS ERP CORE</p>
+                <p className="leading-[16px]">VESTA ERP</p>
               </div>
             </div>
           </div>

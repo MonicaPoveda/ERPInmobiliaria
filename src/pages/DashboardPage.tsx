@@ -12,15 +12,23 @@ import { useApp } from "../state/AppContext"
 
 import { Badge, Button, Spinner } from "../components/ui"
 
+import TechnicalDashboard from "./TechnicalDashboard"
+import DirectorDashboard from "./DirectorDashboard"
+import AsesorDashboard from "./AsesorDashboard"
+
 interface DashboardCard {
   module: ModuleId
+
   label: string
+
   path: string
 }
 
 interface DashboardHighlight {
   label: string
+
   value: string
+
   detail: string
 }
 
@@ -35,7 +43,9 @@ const cards: DashboardCard[] = [
 
   {
     module: "suppliers",
+
     label: "Directorio de proveedores",
+
     path: "/suppliers",
   },
 
@@ -68,6 +78,22 @@ const money = (value: number) =>
   }).format(value)
 
 export default function DashboardPage() {
+  const { user } = useApp()
+
+  if (!user) return null
+
+  return user.role === "superAdmin" ? (
+    <TechnicalDashboard />
+  ) : user.role === "directorComercial" ? (
+    <DirectorDashboard />
+  ) : user.role === "asesorComercial" ? (
+    <AsesorDashboard />
+  ) : (
+    <BusinessDashboard />
+  )
+}
+
+function BusinessDashboard() {
   const { user, notify } = useApp()
 
   const navigate = useNavigate()
@@ -151,214 +177,226 @@ export default function DashboardPage() {
     .reduce((total, item) => total + Number(item.value ?? 0), 0)
 
   const highlights: DashboardHighlight[] =
-    user.role === "superAdmin"
+    user.role === "coordinadorProveedores"
       ? [
           {
-            label: "Estado del sistema",
-            value: "Operativo",
-            detail: "Servicios ERP disponibles",
+            label: "Proveedores",
+
+            value: String(suppliers.length),
+
+            detail: "Fichas en el directorio",
           },
 
           {
-            label: "Alertas de seguridad",
+            label: "Evaluaciones pendientes",
+
             value: String(
-              (data.security ?? []).filter(
-                (record) =>
-                  record.severity === "Alta" && record.status === "Pendiente",
+              suppliers.filter(
+                (record) => record.status === "Evaluación pendiente",
               ).length,
             ),
-            detail: "Eventos de alta prioridad",
+
+            detail: "Servicios por calificar",
           },
 
           {
-            label: "Cuentas activas",
-            value: String(
-              (data.users ?? []).filter((record) => record.active).length,
-            ),
-            detail: "Usuarios con acceso",
+            label: "Calificación promedio",
+
+            value: `${(suppliers.reduce((sum, record) => sum + Number(record.rating ?? 0), 0) / Math.max(1, suppliers.length)).toFixed(1)} / 5`,
+
+            detail: "Desempeño del directorio",
           },
         ]
-      : user.role === "coordinadorProveedores"
+      : user.role === "tesorero"
         ? [
             {
-              label: "Proveedores",
-              value: String(suppliers.length),
-              detail: "Fichas en el directorio",
+              label: "Cuentas por cobrar",
+
+              value: money(receivable),
+
+              detail: "Facturas pendientes y en mora",
             },
 
             {
-              label: "Evaluaciones pendientes",
-              value: String(
-                suppliers.filter(
-                  (record) => record.status === "Evaluación pendiente",
-                ).length,
+              label: "Cuentas por pagar",
+
+              value: money(
+                expenses
+
+                  .filter((record) => record.status === "Pendiente")
+
+                  .reduce(
+                    (sum, record) => sum + Number(record.amount ?? 0),
+
+                    0,
+                  ),
               ),
-              detail: "Servicios por calificar",
+
+              detail: "Solicitudes sin aprobar",
             },
 
             {
-              label: "Calificación promedio",
-              value: `${(suppliers.reduce((sum, record) => sum + Number(record.rating ?? 0), 0) / Math.max(1, suppliers.length)).toFixed(1)} / 5`,
-              detail: "Desempeño del directorio",
+              label: "Flujo de caja recibido",
+
+              value: money(
+                transactions
+
+                  .filter((record) => record.type === "Pago recibido")
+
+                  .reduce(
+                    (sum, record) => sum + Number(record.amount ?? 0),
+
+                    0,
+                  ),
+              ),
+
+              detail: "Pagos registrados",
             },
           ]
-        : user.role === "tesorero"
+        : user.role === "rrhh"
           ? [
               {
-                label: "Cuentas por cobrar",
-                value: money(receivable),
-                detail: "Facturas pendientes y en mora",
+                label: "Cumpleaños del mes",
+
+                value: String(
+                  employees.filter(
+                    (record) =>
+                      String(record.birthday ?? "").slice(5, 7) ===
+                      String(new Date().getMonth() + 1).padStart(2, "0"),
+                  ).length,
+                ),
+
+                detail: "Colaboradores",
               },
 
               {
-                label: "Cuentas por pagar",
-                value: money(
-                  expenses
-                    .filter((record) => record.status === "Pendiente")
-                    .reduce(
-                      (sum, record) => sum + Number(record.amount ?? 0),
-                      0,
-                    ),
+                label: "Contratos por vencer",
+
+                value: String(
+                  employees.filter(
+                    (record) =>
+                      String(record.contractEnd ?? "").slice(0, 7) ===
+                      new Date().toISOString().slice(0, 7),
+                  ).length,
                 ),
-                detail: "Solicitudes sin aprobar",
+
+                detail: "Durante este mes",
               },
 
               {
-                label: "Flujo de caja recibido",
-                value: money(
-                  transactions
-                    .filter((record) => record.type === "Pago recibido")
-                    .reduce(
-                      (sum, record) => sum + Number(record.amount ?? 0),
-                      0,
-                    ),
+                label: "Solicitudes pendientes",
+
+                value: String(
+                  payroll.filter((record) => record.status === "Pendiente")
+                    .length,
                 ),
-                detail: "Pagos registrados",
+
+                detail: "Novedades de nómina",
               },
             ]
-          : user.role === "rrhh"
+          : user.role === "almacenista"
             ? [
                 {
-                  label: "Cumpleaños del mes",
+                  label: "Stock crítico",
+
                   value: String(
-                    employees.filter(
+                    inventory.filter(
                       (record) =>
-                        String(record.birthday ?? "").slice(5, 7) ===
-                        String(new Date().getMonth() + 1).padStart(2, "0"),
+                        Number(record.quantity ?? 0) <=
+                        Number(record.minStock ?? 0),
                     ).length,
                   ),
-                  detail: "Colaboradores",
+
+                  detail: "Productos por reponer",
                 },
 
                 {
-                  label: "Contratos por vencer",
-                  value: String(
-                    employees.filter(
-                      (record) =>
-                        String(record.contractEnd ?? "").slice(0, 7) ===
-                        new Date().toISOString().slice(0, 7),
-                    ).length,
-                  ),
-                  detail: "Durante este mes",
+                  label: "Productos registrados",
+
+                  value: String(inventory.length),
+
+                  detail: "Existencias controladas",
                 },
 
                 {
-                  label: "Solicitudes pendientes",
-                  value: String(
-                    payroll.filter((record) => record.status === "Pendiente")
-                      .length,
-                  ),
-                  detail: "Novedades de nómina",
+                  label: "Movimientos del período",
+
+                  value: String((data.movements ?? []).length),
+
+                  detail: "Entradas y salidas",
                 },
               ]
-            : user.role === "almacenista"
+            : user.role === "asesorComercial"
               ? [
                   {
-                    label: "Stock crítico",
+                    label: "Agenda de hoy",
+
+                    value: "3 visitas",
+
+                    detail: "Reuniones y llamadas programadas",
+                  },
+
+                  {
+                    label: "Comisiones frente a meta",
+
+                    value: `${money(prospects.reduce((sum, record) => sum + Number(record.commission ?? 0), 0))} / ${money(15000000)}`,
+
+                    detail: "Meta mensual de comisiones",
+                  },
+
+                  {
+                    label: "Oportunidades en cierre",
+
                     value: String(
-                      inventory.filter(
-                        (record) =>
-                          Number(record.quantity ?? 0) <=
-                          Number(record.minStock ?? 0),
-                      ).length,
+                      prospects.filter((record) => record.stage === "Cierre")
+                        .length,
                     ),
-                    detail: "Productos por reponer",
-                  },
 
-                  {
-                    label: "Productos registrados",
-                    value: String(inventory.length),
-                    detail: "Existencias controladas",
-                  },
-
-                  {
-                    label: "Movimientos del período",
-                    value: String((data.movements ?? []).length),
-                    detail: "Entradas y salidas",
+                    detail: "Prospectos propios",
                   },
                 ]
-              : user.role === "asesorComercial"
-                ? [
-                    {
-                      label: "Agenda de hoy",
-                      value: "3 visitas",
-                      detail: "Reuniones y llamadas programadas",
-                    },
+              : [
+                  {
+                    label: "Asesores activos",
 
-                    {
-                      label: "Comisiones frente a meta",
-                      value: `${money(prospects.reduce((sum, record) => sum + Number(record.commission ?? 0), 0))} / ${money(15000000)}`,
-                      detail: "Meta mensual de comisiones",
-                    },
+                    value: String(
+                      new Set(team.map((record) => record.advisor)).size,
+                    ),
 
-                    {
-                      label: "Oportunidades en cierre",
-                      value: String(
-                        prospects.filter((record) => record.stage === "Cierre")
-                          .length,
-                      ),
-                      detail: "Prospectos propios",
-                    },
-                  ]
-                : [
-                    {
-                      label: "Asesores activos",
-                      value: String(
-                        new Set(team.map((record) => record.advisor)).size,
-                      ),
-                      detail: "Equipo comercial",
-                    },
+                    detail: "Equipo comercial",
+                  },
 
-                    {
-                      label: "Proyección consolidada",
-                      value: money(
-                        team.reduce(
-                          (sum, record) => sum + Number(record.amount ?? 0),
-                          0,
-                        ),
-                      ),
-                      detail: "Valor total del pipeline",
-                    },
+                  {
+                    label: "Proyección consolidada",
 
-                    {
-                      label: "Negociaciones abiertas",
-                      value: String(
-                        team.filter((record) => record.stage === "Negociación")
-                          .length,
+                    value: money(
+                      team.reduce(
+                        (sum, record) => sum + Number(record.amount ?? 0),
+
+                        0,
                       ),
-                      detail: "Descuentos por autorizar",
-                    },
-                  ]
+                    ),
+
+                    detail: "Valor total del pipeline",
+                  },
+
+                  {
+                    label: "Negociaciones abiertas",
+
+                    value: String(
+                      team.filter((record) => record.stage === "Negociación")
+                        .length,
+                    ),
+
+                    detail: "Descuentos por autorizar",
+                  },
+                ]
 
   return (
     <div className="dashboard-page">
       <section className="welcome-card">
         <div>
-          <span>
-            {user.role === "superAdmin"
-              ? "CENTRO DE CONTROL TÉCNICO"
-              : "PANEL OPERATIVO"}
-          </span>
+          <span>"PANEL OPERATIVO"</span>
           <h1>Bienvenido, {user.name.split(" ")[0]}</h1>
           <p>
             Panel de {subtitle}. Indicadores y alertas según los permisos de tu
@@ -366,12 +404,11 @@ export default function DashboardPage() {
           </p>
         </div>
         <div>
-          <Badge tone={user.role === "superAdmin" ? "admin" : "neutral"}>
-            {subtitle}
-          </Badge>
+          <Badge tone="neutral">{subtitle}</Badge>
           <Button
             onClick={() => {
               void load()
+
               notify("Indicadores actualizados.", "success")
             }}
             variant="secondary"
@@ -416,11 +453,13 @@ export default function DashboardPage() {
                   </thead>
                   <tbody>
                     {inventory
+
                       .filter(
                         (record) =>
                           Number(record.quantity ?? 0) <=
                           Number(record.minStock ?? 0),
                       )
+
                       .map((record) => (
                         <tr key={record.id}>
                           <td>{record.name}</td>
@@ -445,43 +484,11 @@ export default function DashboardPage() {
               </div>
             </section>
           )}
-          {user.role === "superAdmin" && (
-            <section className="data-card">
-              <h2>Alertas de seguridad</h2>
-              <div className="table-scroll">
-                <table>
-                  <thead>
-                    <tr>
-                      <th>Evento</th>
-                      <th>Usuario</th>
-                      <th>Severidad</th>
-                      <th>Estado</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {(data.security ?? [])
-                      .filter((record) => record.severity === "Alta")
-                      .slice(0, 5)
-                      .map((record) => (
-                        <tr key={record.id}>
-                          <td>{record.event}</td>
-                          <td>{record.user}</td>
-                          <td>
-                            <Badge tone="danger">
-                              {String(record.severity)}
-                            </Badge>
-                          </td>
-                          <td>{record.status}</td>
-                        </tr>
-                      ))}
-                  </tbody>
-                </table>
-              </div>
-            </section>
-          )}
           <section className="kpi-grid">
             {cards
+
               .filter((card) => can(user, card.module))
+
               .map((card) => (
                 <Button
                   className="kpi-button"
@@ -503,7 +510,9 @@ export default function DashboardPage() {
               </div>
               <div className="bar-chart">
                 {cards
+
                   .filter((card) => can(user, card.module))
+
                   .map((card, index) => (
                     <div key={card.module}>
                       <span

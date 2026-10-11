@@ -77,7 +77,7 @@ export default function LoginPage() {
       notify("Código OTP demo enviado. Use 258963.", "info")
       return
     }
-    notify("Bienvenido a Arias Empire.", "success")
+    notify("Bienvenido a Vesta ERP.", "success")
     navigate("/")
   }
 
@@ -101,9 +101,12 @@ export default function LoginPage() {
   return (
     <main className="login-page">
       <section className="login-hero">
-        <div>
-          <span className="brand-dot" />
-          ARIAS EMPIRE ASSET MANAGEMENT
+        <div className="login-hero__brand">
+          <img
+            alt="Vesta ERP"
+            className="login-hero__logo h-24 w-auto object-contain mb-6"
+            src="/assets/logo-vesta.jpg"
+          />
         </div>
         <p>PLATAFORMA ERP CORE V4.8</p>
         <h1>
@@ -118,7 +121,7 @@ export default function LoginPage() {
         </p>
         <div className="login-hero__asset">
           <small>SEDE CENTRAL EL POBLADO</small>
-          <strong>Torre Arias Financial Park</strong>
+          <strong>Vesta Financial Park</strong>
           <span>ACTIVO AAA</span>
         </div>
         <div className="security-strip">
@@ -127,11 +130,11 @@ export default function LoginPage() {
         </div>
       </section>
       <section className="login-panel">
-        <div className="login-wordmark">
-          ARIAS
-          <br />
-          EMPIRE
-        </div>
+        <img
+          alt="Vesta ERP"
+          className="login-wordmark h-24 w-auto object-contain mb-6"
+          src="/assets/logo-vesta.jpg"
+        />
         <div className="role-picker">
           <div className="section-heading">
             <span>ACCESO ASISTIDO</span>

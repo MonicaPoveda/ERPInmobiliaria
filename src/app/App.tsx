@@ -12,7 +12,7 @@ export default function App() {
         fallback={
           <div className="app-loading">
             <Spinner />
-            <span>Cargando Arias Empire...</span>
+            <span>Cargando Vesta ERP...</span>
           </div>
         }
       >

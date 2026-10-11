@@ -32,7 +32,7 @@ const imgContainer24 = `${assetPathPrefix}/f3232.svg`
 const imgContainer25 = `${assetPathPrefix}/cd6ec.svg`
 const imgContainer26 = `${assetPathPrefix}/215fa.svg`
 
-export default function InicioDeSesionYAccesoPorRolesAriasEmpire() {
+export default function InicioDeSesionYAccesoPorRolesVestaERP() {
   return (
     <div
       className="content-stretch flex flex-col items-start pl-[256px] relative size-full"
@@ -41,7 +41,7 @@ export default function InicioDeSesionYAccesoPorRolesAriasEmpire() {
         backgroundImage:
           "linear-gradient(90deg, rgb(248, 249, 255) 0%, rgb(248, 249, 255) 100%), linear-gradient(90deg, rgb(255, 255, 255) 0%, rgb(255, 255, 255) 100%)",
       }}
-      data-name="Inicio de Sesión y Acceso por Roles - Arias Empire"
+      data-name="Inicio de Sesión y Acceso por Roles - Vesta ERP"
     >
       <div
         className="bg-[#f8f9ff] content-stretch flex flex-col items-start min-h-[1024px] pb-[68px] pt-[64px] px-[24px] relative shrink-0 w-full"
@@ -108,7 +108,7 @@ export default function InicioDeSesionYAccesoPorRolesAriasEmpire() {
                     data-node-id="1:535"
                   >
                     <p className="leading-[14px]">
-                      ARIAS EMPIRE ASSET MANAGEMENT
+                      VESTA ERP ASSET MANAGEMENT
                     </p>
                   </div>
                 </div>
@@ -235,7 +235,7 @@ export default function InicioDeSesionYAccesoPorRolesAriasEmpire() {
                           data-node-id="1:553"
                         >
                           <p className="leading-[24px]">
-                            Torre Arias Financial Park
+                            Vesta Financial Park
                           </p>
                         </div>
                       </div>
@@ -456,7 +456,7 @@ export default function InicioDeSesionYAccesoPorRolesAriasEmpire() {
                     data-node-id="1:589"
                   >
                     <p className="leading-[16px]">
-                      Arias Empire Legal Tech Node #04
+                      Vesta ERP Legal Tech Node #04
                     </p>
                   </div>
                 </div>
@@ -1358,7 +1358,7 @@ export default function InicioDeSesionYAccesoPorRolesAriasEmpire() {
             <div
               className="h-[32px] max-w-[186.4199981689453px] relative shrink-0 w-[104.94px]"
               data-node-id="1:734"
-              data-name="Arias Empire Logo"
+              data-name="Vesta ERP Logo"
             />
             <div
               className="content-stretch flex flex-col items-start pr-[16.17px] relative shrink-0"
@@ -1369,7 +1369,7 @@ export default function InicioDeSesionYAccesoPorRolesAriasEmpire() {
                 className="[word-break:break-word] flex flex-col font-['Inter:Bold'] font-bold justify-center leading-[0] not-italic relative shrink-0 text-[#0b1c30] text-[16px] tracking-[-0.4px] uppercase whitespace-nowrap"
                 data-node-id="1:736"
               >
-                <p className="leading-[24px] mb-0">ARIAS</p>
+                <p className="leading-[24px] mb-0">VESTA</p>
                 <p className="leading-[24px]">EMPIRE</p>
               </div>
             </div>
@@ -1586,7 +1586,7 @@ export default function InicioDeSesionYAccesoPorRolesAriasEmpire() {
                 className="[word-break:break-word] flex flex-col font-['Inter:Semi_Bold'] font-semibold justify-center leading-[0] not-italic relative shrink-0 text-[#ffdf98] text-[12px] tracking-[0.6px] uppercase whitespace-nowrap"
                 data-node-id="1:770"
               >
-                <p className="leading-[16px]">ARIAS ERP CORE</p>
+                <p className="leading-[16px]">VESTA ERP</p>
               </div>
             </div>
           </div>

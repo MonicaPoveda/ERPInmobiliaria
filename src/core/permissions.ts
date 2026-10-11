@@ -12,18 +12,6 @@ export const permissionMatrix: Record<Role, PermissionSet> = {
   superAdmin: {
     dashboard: read,
 
-    inventory: full,
-
-    crm: full,
-
-    contracts: full,
-
-    people: full,
-
-    billing: full,
-
-    portal: full,
-
     security: full,
 
     users: full,
@@ -31,20 +19,6 @@ export const permissionMatrix: Record<Role, PermissionSet> = {
     audit: read,
 
     settings: manage,
-
-    suppliers: full,
-
-    transactions: full,
-
-    expenses: full,
-
-    movements: full,
-
-    kardex: read,
-
-    payroll: full,
-
-    team: full,
   },
 
   coordinadorProveedores: {
@@ -85,6 +59,8 @@ export const permissionMatrix: Record<Role, PermissionSet> = {
     dashboard: read,
 
     crm: full,
+
+    catalogo: read,
   },
 
   directorComercial: {
@@ -93,6 +69,8 @@ export const permissionMatrix: Record<Role, PermissionSet> = {
     crm: full,
 
     team: full,
+
+    catalogo: read,
   },
 }
 

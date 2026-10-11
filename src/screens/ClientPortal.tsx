@@ -56,7 +56,7 @@ const imgContainer47 = `${assetPathPrefix}/fde5e.svg`
 const imgContainer48 = `${assetPathPrefix}/59e02.svg`
 const imgContainer49 = `${assetPathPrefix}/b28d4.svg`
 
-export default function PortalDeAutogestionDelClienteAriasEmpire() {
+export default function PortalDeAutogestionDelClienteVestaERP() {
   return (
     <div
       className="content-stretch flex flex-col items-start relative size-full"
@@ -65,7 +65,7 @@ export default function PortalDeAutogestionDelClienteAriasEmpire() {
         backgroundImage:
           "linear-gradient(90deg, rgb(248, 249, 255) 0%, rgb(248, 249, 255) 100%), linear-gradient(90deg, rgb(255, 255, 255) 0%, rgb(255, 255, 255) 100%)",
       }}
-      data-name="Portal de Autogestión del Cliente - Arias Empire"
+      data-name="Portal de Autogestión del Cliente - Vesta ERP"
     >
       <div
         className="bg-[#f8f9ff] content-stretch flex flex-col items-start min-h-[800px] pt-[112px] relative shrink-0 w-full"
@@ -3565,7 +3565,7 @@ export default function PortalDeAutogestionDelClienteAriasEmpire() {
                 data-node-id="1:2621"
               >
                 <p className="leading-[24px]">
-                  ARIAS EMPIRE LUXURY REAL ESTATE
+                  VESTA ERP
                 </p>
               </div>
             </div>
@@ -3591,7 +3591,7 @@ export default function PortalDeAutogestionDelClienteAriasEmpire() {
                 data-node-id="1:2625"
               >
                 <p className="leading-[16px]">
-                  © 2024 Arias Empire Global Holdings. Todos los derechos
+                  © 2024 Vesta ERP. Todos los derechos
                   reservados.
                 </p>
               </div>
@@ -3697,7 +3697,7 @@ export default function PortalDeAutogestionDelClienteAriasEmpire() {
                       className="[word-break:break-word] flex flex-col font-['Inter:Semi_Bold'] font-semibold justify-center leading-[0] not-italic relative shrink-0 text-[#001026] text-[16px] tracking-[-0.4px] uppercase whitespace-nowrap"
                       data-node-id="1:2643"
                     >
-                      <p className="leading-[24px]">ARIAS EMPIRE</p>
+                      <p className="leading-[24px]">VESTA ERP</p>
                     </div>
                   </div>
                   <div

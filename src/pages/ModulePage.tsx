@@ -5,6 +5,7 @@ import {
   useState,
   type FormEvent,
 } from "react"
+import { useLocation, useNavigate } from "react-router"
 import { can } from "../core/permissions"
 import { moduleConfigs } from "../core/modules"
 import type { EntityRecord, FieldConfig, ModuleConfig } from "../core/types"
@@ -203,6 +204,8 @@ export default function ModulePage({
   moduleId: keyof typeof moduleConfigs
 }) {
   const { user, notify } = useApp()
+  const location = useLocation()
+  const navigate = useNavigate()
   const baseConfig = moduleConfigs[moduleId]
   const config = {
     ...baseConfig,
@@ -251,6 +254,16 @@ export default function ModulePage({
     window.addEventListener(repository.eventName, update)
     return () => window.removeEventListener(repository.eventName, update)
   }, [load])
+
+  useEffect(() => {
+    if (
+      moduleId === "crm" &&
+      new URLSearchParams(location.search).get("new") === "true"
+    ) {
+      setEditing("new")
+      navigate(location.pathname, { replace: true })
+    }
+  }, [location.pathname, location.search, moduleId, navigate])
 
   const statuses = useMemo(
     () => [

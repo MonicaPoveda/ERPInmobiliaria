@@ -3220,7 +3220,7 @@ export default function DashboardMetricasGlobalesVistaAdministrador() {
             <div
               className="h-[32px] max-w-[186.4199981689453px] relative shrink-0 w-[104.94px]"
               data-node-id="1:1366"
-              data-name="Arias Empire Logo"
+              data-name="Vesta ERP Logo"
             />
             <div
               className="content-stretch flex flex-col items-start pr-[16.17px] relative shrink-0"
@@ -3231,7 +3231,7 @@ export default function DashboardMetricasGlobalesVistaAdministrador() {
                 className="[word-break:break-word] flex flex-col font-['Inter:Bold'] font-bold justify-center leading-[0] not-italic relative shrink-0 text-[#0b1c30] text-[16px] tracking-[-0.4px] uppercase whitespace-nowrap"
                 data-node-id="1:1368"
               >
-                <p className="leading-[24px] mb-0">ARIAS</p>
+                <p className="leading-[24px] mb-0">VESTA</p>
                 <p className="leading-[24px]">EMPIRE</p>
               </div>
             </div>
@@ -3448,7 +3448,7 @@ export default function DashboardMetricasGlobalesVistaAdministrador() {
                 className="[word-break:break-word] flex flex-col font-['Inter:Semi_Bold'] font-semibold justify-center leading-[0] not-italic relative shrink-0 text-[#ffdf98] text-[12px] tracking-[0.6px] uppercase whitespace-nowrap"
                 data-node-id="1:1402"
               >
-                <p className="leading-[16px]">ARIAS ERP CORE</p>
+                <p className="leading-[16px]">VESTA ERP</p>
               </div>
             </div>
           </div>
