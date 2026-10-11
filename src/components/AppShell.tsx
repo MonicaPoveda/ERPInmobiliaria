@@ -8,6 +8,8 @@ import type { ModuleId, Role } from "../core/types"
 
 import { useApp } from "../state/AppContext"
 
+import { BrandLogo } from "./BrandLogo"
+
 import { Button, ConfirmDialog, Modal } from "./ui"
 
 const navigation: Array<{
@@ -192,11 +194,7 @@ export default function AppShell() {
     <div className="app-shell">
       <aside className={`sidebar ${mobileOpen ? "sidebar--open" : ""}`}>
         <div className="sidebar__brand">
-          <img
-            alt="Vesta ERP"
-            className="h-12 w-auto object-contain"
-            src="/assets/logo-vesta.jpg"
-          />
+          <BrandLogo className="brand-logo--sidebar" theme="dark" />
           <Button
             aria-label="Cerrar menú"
             className="mobile-only"
@@ -240,11 +238,7 @@ export default function AppShell() {
           >
             Menú
           </Button>
-          <img
-            alt="Vesta ERP"
-            className="topbar__logo"
-            src="/assets/logo-vesta.jpg"
-          />
+          <BrandLogo className="brand-logo--header" theme="light" />
           <div className="topbar__spacer" />
           <div className="online-status">
             <span />

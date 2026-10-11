@@ -14,8 +14,18 @@ import {
 } from "lucide-react"
 
 import { useNavigate } from "react-router"
+import {
+  Bar,
+  BarChart,
+  CartesianGrid,
+  ResponsiveContainer,
+  Tooltip,
+  XAxis,
+  YAxis,
+} from "recharts"
 
 import { Badge, Button } from "../components/ui"
+import KpiCard from "../components/KpiCard"
 
 import {
   commercialAdvisors,
@@ -130,42 +140,9 @@ export default function DirectorDashboard() {
       </section>
 
       <section aria-label="Indicadores comerciales" className="commercial-kpis">
-        <article className="commercial-kpi commercial-kpi--featured">
-          <span className="commercial-kpi__icon">
-            <CircleDollarSign aria-hidden="true" size={20} />
-          </span>
-          <div>
-            <small>Dinero en pipeline</small>
-            <strong>{compactMoney(pipelineValue)}</strong>
-            <span className="commercial-kpi__caption">
-              {pipelineOpportunities.length} oportunidades activas
-            </span>
-          </div>
-        </article>
-        <article className="commercial-kpi">
-          <span className="commercial-kpi__icon commercial-kpi__icon--green">
-            <HandCoins aria-hidden="true" size={20} />
-          </span>
-          <div>
-            <small>A punto de cerrar</small>
-            <strong>{closingDeals}</strong>
-            <span className="commercial-kpi__caption">
-              Negocios en negociación
-            </span>
-          </div>
-        </article>
-        <article className="commercial-kpi">
-          <span className="commercial-kpi__icon commercial-kpi__icon--blue">
-            <BarChart3 aria-hidden="true" size={20} />
-          </span>
-          <div>
-            <small>Conversión del equipo</small>
-            <strong>24%</strong>
-            <span className="commercial-kpi__caption">
-              +3,2 pp frente al mes pasado
-            </span>
-          </div>
-        </article>
+        <KpiCard accent="gold" detail={`${pipelineOpportunities.length} oportunidades activas`} icon={CircleDollarSign} title="Dinero en pipeline" value={compactMoney(pipelineValue)} />
+        <KpiCard accent="green" detail="Negocios en negociación" icon={HandCoins} title="A punto de cerrar" value={closingDeals} />
+        <KpiCard accent="blue" change={{ value: `${Math.abs(salesChange)}% vs. mes anterior`, direction: salesChange >= 0 ? "positive" : "negative" }} detail="Conversión del equipo" icon={BarChart3} title="Tasa de conversión" value="24%" />
       </section>
 
       <section className="commercial-main-grid">
@@ -183,47 +160,18 @@ export default function DirectorDashboard() {
           </div>
           <div
             aria-label={`Ventas: ${money(currentMonthSales.sales * 1_000_000)} en ${currentMonthSales.month} frente a ${money(previousMonthSales.sales * 1_000_000)} en ${previousMonthSales.month}`}
-            className="sales-chart"
+            className="h-64 min-w-0"
             role="img"
           >
-            {[previousMonthSales, currentMonthSales].map((month) => {
-              const amount = month.sales * 1_000_000
-
-              const maxSales = Math.max(
-                previousMonthSales.sales,
-
-                currentMonthSales.sales,
-              )
-
-              const height = (month.sales / maxSales) * 100
-
-              return (
-                <div className="sales-chart__column" key={month.month}>
-                  <strong>{compactMoney(amount)}</strong>
-                  <div className="sales-chart__track">
-                    <span
-                      className={
-                        month === currentMonthSales
-                          ? "sales-chart__bar sales-chart__bar--current"
-                          : "sales-chart__bar"
-                      }
-                      style={{ height: `${height}%` }}
-                    />
-                  </div>
-                  <span className="sales-chart__month">{month.month}</span>
-                </div>
-              )
-            })}
-          </div>
-          <div className="sales-chart__footer">
-            <span>
-              <i className="sales-chart__legend sales-chart__legend--previous" />
-              Mes anterior
-            </span>
-            <span>
-              <i className="sales-chart__legend" />
-              Mes actual
-            </span>
+            <ResponsiveContainer height="100%" width="100%">
+              <BarChart data={monthlySales} margin={{ top: 8, right: 12, left: 0, bottom: 0 }}>
+                <CartesianGrid stroke="#e8edf5" strokeDasharray="4 4" vertical={false} />
+                <XAxis axisLine={false} dataKey="month" tickLine={false} />
+                <YAxis axisLine={false} tickFormatter={(value: number) => compactMoney(value * 1_000_000)} tickLine={false} width={64} />
+                <Tooltip formatter={(value) => money(Number(value) * 1_000_000)} />
+                <Bar dataKey="sales" fill="#d9a928" name="Ventas cerradas (millones COP)" radius={[6, 6, 0, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
           </div>
         </article>
 

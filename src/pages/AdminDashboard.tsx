@@ -1,11 +1,9 @@
 import { useMemo, useState } from "react"
 
 import {
-  Activity,
   ArrowUpRight,
   Check,
   ChevronRight,
-  CircleAlert,
   Clock3,
   LifeBuoy,
   Search,
@@ -17,6 +15,15 @@ import {
 } from "lucide-react"
 
 import { useNavigate } from "react-router"
+import {
+  CartesianGrid,
+  Line,
+  LineChart,
+  ResponsiveContainer,
+  Tooltip,
+  XAxis,
+  YAxis,
+} from "recharts"
 
 import {
   activeSupportSessions,
@@ -26,10 +33,12 @@ import {
   type ItEventStatus,
   type SupportTicket,
 } from "../data/itMock"
+import { blockedAccessFeed, itWeeklyEvents } from "../data/dashboardMock"
 
 import { useApp } from "../state/AppContext"
 
 import { Badge, Button, Input, Select } from "../components/ui"
+import KpiCard from "../components/KpiCard"
 
 const severityTone: Record<ItEvent["severity"], "danger" | "warning" | "success"> =
   {
@@ -46,7 +55,7 @@ const eventStatusTone: Record<ItEventStatus, "warning" | "success"> = {
   Resuelto: "success",
 }
 
-export default function TechnicalDashboard() {
+export default function AdminDashboard() {
   const { user, notify } = useApp()
 
   const navigate = useNavigate()
@@ -142,61 +151,46 @@ export default function TechnicalDashboard() {
         </div>
       </section>
 
-      <section aria-label="Indicadores técnicos" className="it-metrics">
-        <article className="it-metric-card">
-          <div className="it-metric-card__top">
-            <span>Servidor / sistema</span>
-            <span className="it-metric-icon it-metric-icon--green">
-              <Server aria-hidden="true" size={20} />
-            </span>
-          </div>
-          <strong className="it-metric-card__status">Operativo</strong>
-          <div className="it-metric-card__foot">
-            <span className="it-status-dot" />
-            99.9% uptime · Todos los servicios activos
+      <section aria-label="Indicadores técnicos" className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+        <KpiCard accent="green" detail="Todos los servicios activos" icon={Server} title="Uptime del sistema" value="99.9%" />
+        <KpiCard accent="blue" detail="Usuarios conectados ahora" icon={Users} title="Usuarios activos" value={activeSupportSessions.length} />
+        <KpiCard accent="red" detail="Accesos fallidos o denegados" icon={ShieldAlert} title="Alertas críticas" value={failedAttempts} />
+        <KpiCard accent="gold" detail="Solicitudes pendientes de atención" icon={Ticket} title="Tickets de soporte" value={pendingTickets} />
+      </section>
+
+      <section className="grid gap-5 xl:grid-cols-[minmax(0,1.5fr)_minmax(300px,1fr)]">
+        <article className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+          <p className="text-xs font-bold tracking-widest text-amber-700">MONITOREO DE INFRAESTRUCTURA</p>
+          <h2 className="mt-1 text-lg font-bold text-slate-900">Tráfico de red y eventos de seguridad</h2>
+          <p className="mt-1 text-sm text-slate-500">Actividad simulada de los últimos siete días.</p>
+          <div className="mt-3 h-64 min-w-0">
+            <ResponsiveContainer height="100%" width="100%">
+              <LineChart data={itWeeklyEvents} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
+                <CartesianGrid stroke="#e8edf5" strokeDasharray="4 4" vertical={false} />
+                <XAxis axisLine={false} dataKey="day" tickLine={false} />
+                <YAxis axisLine={false} tickLine={false} width={36} />
+                <Tooltip />
+                <Line dataKey="traffic" name="Tráfico de red (eventos)" stroke="#315f92" strokeWidth={3} dot={{ r: 3 }} />
+                <Line dataKey="security" name="Eventos de seguridad" stroke="#d9a928" strokeWidth={3} dot={{ r: 3 }} />
+              </LineChart>
+            </ResponsiveContainer>
           </div>
         </article>
-
-        <article className="it-metric-card">
-          <div className="it-metric-card__top">
-            <span>Sesiones activas</span>
-            <span className="it-metric-icon it-metric-icon--blue">
-              <Users aria-hidden="true" size={20} />
-            </span>
-          </div>
-          <strong>{activeSupportSessions.length}</strong>
-          <div className="it-metric-card__foot">
-            <Activity aria-hidden="true" size={14} />
-            Usuarios conectados ahora
-          </div>
-        </article>
-
-        <article className="it-metric-card">
-          <div className="it-metric-card__top">
-            <span>Alertas de seguridad</span>
-            <span className="it-metric-icon it-metric-icon--red">
-              <ShieldAlert aria-hidden="true" size={20} />
-            </span>
-          </div>
-          <strong>{failedAttempts}</strong>
-          <div className="it-metric-card__foot">
-            <CircleAlert aria-hidden="true" size={14} />
-            Accesos fallidos o denegados
-          </div>
-        </article>
-
-        <article className="it-metric-card">
-          <div className="it-metric-card__top">
-            <span>Tickets de soporte</span>
-            <span className="it-metric-icon it-metric-icon--gold">
-              <Ticket aria-hidden="true" size={20} />
-            </span>
-          </div>
-          <strong>{pendingTickets}</strong>
-          <div className="it-metric-card__foot">
-            <LifeBuoy aria-hidden="true" size={14} />
-            Solicitudes pendientes
-          </div>
+        <article className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+          <p className="text-xs font-bold tracking-widest text-rose-700">SEGURIDAD · ACCESO DENEGADO</p>
+          <h2 className="mt-1 text-lg font-bold text-slate-900">Últimos intentos bloqueados</h2>
+          <ul className="mt-3 divide-y divide-slate-100">
+            {blockedAccessFeed.map((entry) => (
+              <li className="py-3" key={entry.id}>
+                <div className="flex items-center justify-between gap-3">
+                  <strong className="text-sm text-slate-800">{entry.id}</strong>
+                  <Badge tone={entry.severity === "Alta" ? "danger" : "warning"}>{entry.severity}</Badge>
+                </div>
+                <p className="my-1 text-sm text-slate-600">{entry.detail}</p>
+                <span className="text-xs text-slate-400">{entry.time}</span>
+              </li>
+            ))}
+          </ul>
         </article>
       </section>
 

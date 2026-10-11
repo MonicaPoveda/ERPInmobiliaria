@@ -3,6 +3,7 @@ import { Navigate, useNavigate } from "react-router"
 import { demoUsers } from "../data/seed"
 import { useApp } from "../state/AppContext"
 import { Button, Input, Modal } from "../components/ui"
+import { BrandLogo } from "../components/BrandLogo"
 
 const roleDemos = [
   {
@@ -101,13 +102,7 @@ export default function LoginPage() {
   return (
     <main className="login-page">
       <section className="login-hero">
-        <div className="login-hero__brand">
-          <img
-            alt="Vesta ERP"
-            className="login-hero__logo h-24 w-auto object-contain mb-6"
-            src="/assets/logo-vesta.jpg"
-          />
-        </div>
+        <BrandLogo className="login-hero__brand" theme="dark" />
         <p>PLATAFORMA ERP CORE V4.8</p>
         <h1>
           Seguridad &<br />
@@ -130,11 +125,6 @@ export default function LoginPage() {
         </div>
       </section>
       <section className="login-panel">
-        <img
-          alt="Vesta ERP"
-          className="login-wordmark h-24 w-auto object-contain mb-6"
-          src="/assets/logo-vesta.jpg"
-        />
         <div className="role-picker">
           <div className="section-heading">
             <span>ACCESO ASISTIDO</span>

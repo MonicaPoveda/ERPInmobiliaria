@@ -1,4 +1,15 @@
-import { useMemo, useState } from "react"
+import { useState } from "react"
+
+import {
+  Bar,
+  BarChart,
+  Cell,
+  Pie,
+  PieChart,
+  ResponsiveContainer,
+  Tooltip,
+  XAxis,
+} from "recharts"
 
 import {
   ArrowRight,
@@ -9,49 +20,71 @@ import {
   Phone,
   Plus,
   Sparkles,
+  UsersRound,
 } from "lucide-react"
 
 import { useNavigate } from "react-router"
 
 import { Badge, Button } from "../components/ui"
+import DashboardState from "../components/DashboardState"
+import KpiCard from "../components/KpiCard"
 
 import {
-  advisorPipeline,
   advisorTasks,
   commercialAdvisors,
   type CommercialTask,
 } from "../data/mockCommercial"
 
 import { useApp } from "../state/AppContext"
+import useDashboardRecords from "../hooks/useDashboardRecords"
 
-const money = (value: number) =>
-  new Intl.NumberFormat("es-CO", {
-    style: "currency",
+import { formatCOP } from "../core/format"
 
-    currency: "COP",
-
-    maximumFractionDigits: 0,
-  }).format(value)
+const modules = ["crm"] as const
 
 export default function AsesorDashboard() {
   const { user, notify } = useApp()
 
   const navigate = useNavigate()
 
+  const { data, loading, error, reload } = useDashboardRecords(modules)
+
   const [tasks, setTasks] = useState(advisorTasks)
 
-  const advisor = useMemo(
-    () =>
-      commercialAdvisors.find((item) => item.name === user?.name) ??
-      commercialAdvisors[0],
-
-    [user?.name],
+  const advisor = commercialAdvisors.find((item) => item.name === user?.name)
+  const prospects = (data.crm ?? []).filter(
+    (record) => record.advisor === user?.name,
   )
+  const target = advisor?.target ?? 15_000_000
+  const achieved = prospects.reduce(
+    (total, prospect) => total + Number(prospect.commission ?? 0),
+    0,
+  )
+  const pipeline = [
+    {
+      stage: "Contacto",
+      count: prospects.filter((prospect) => prospect.stage === "Contacto").length,
+      color: "#5271c8",
+    },
+    {
+      stage: "Negociación",
+      count: prospects.filter((prospect) => prospect.stage === "Negociación").length,
+      color: "#b38a35",
+    },
+    {
+      stage: "Cierre",
+      count: prospects.filter((prospect) => prospect.stage === "Cierre").length,
+      color: "#17866c",
+    },
+  ]
+  const commissionProgress = [
+    { name: "Logrado", value: achieved, color: "#d9a928" },
+    { name: "Pendiente", value: Math.max(0, target - achieved), color: "#e8edf5" },
+  ]
 
   const progress = Math.min(
     100,
-
-    Math.round((advisor.achieved / advisor.target) * 100),
+    Math.round((achieved / target) * 100),
   )
 
   const toggleTask = (task: CommercialTask) => {
@@ -87,6 +120,14 @@ export default function AsesorDashboard() {
         <Badge tone="client">Octubre 2026</Badge>
       </section>
 
+      <DashboardState error={error} loading={loading} onRetry={reload} />
+      {!loading && !error && (
+      <>
+      <section aria-label="Resumen personal" className="grid gap-4 md:grid-cols-3">
+        <KpiCard accent="gold" detail={`Meta mensual ${formatCOP(target)}`} icon={Sparkles} title="Comisiones alcanzadas" value={formatCOP(achieved)} />
+        <KpiCard accent="blue" detail="Asignados a tu usuario" icon={UsersRound} title="Prospectos propios" value={prospects.length} />
+        <KpiCard accent="green" detail="Llamadas y visitas por completar" icon={CalendarDays} title="Tareas pendientes" value={tasks.filter((task) => !task.done).length} />
+      </section>
       <section className="advisor-personal-grid">
         <article className="data-card advisor-goal-card">
           <div className="commercial-panel__heading">
@@ -99,30 +140,31 @@ export default function AsesorDashboard() {
             </span>
           </div>
           <div className="advisor-goal-content">
-            <div
-              aria-label={`${progress}% de la meta de comisiones alcanzada`}
-              className="commission-donut"
-              role="img"
-              style={{
-                background: `conic-gradient(var(--gold) 0 ${progress}%, #e8edf5 ${progress}% 100%)`,
-              }}
-            >
-              <div>
-                <strong>{progress}%</strong>
-                <span>de tu meta</span>
+            <div aria-label={`${progress}% de la meta de comisiones alcanzada`} className="h-44 w-44 shrink-0" role="img">
+              <ResponsiveContainer height="100%" width="100%">
+                <PieChart>
+                  <Pie data={commissionProgress} dataKey="value" innerRadius={54} outerRadius={77} startAngle={90} endAngle={-270} paddingAngle={1}>
+                    {commissionProgress.map((slice) => <Cell fill={slice.color} key={slice.name} />)}
+                  </Pie>
+                  <Tooltip formatter={(value) => formatCOP(Number(value))} />
+                </PieChart>
+              </ResponsiveContainer>
+              <div className="pointer-events-none -mt-[6.6rem] flex flex-col items-center text-slate-900">
+                <strong className="text-2xl font-bold">{progress}%</strong>
+                <span className="text-xs text-slate-500">de tu meta</span>
               </div>
             </div>
             <div className="advisor-goal-summary">
               <span>Comisión acumulada</span>
-              <strong>{money(advisor.achieved)}</strong>
+              <strong>{formatCOP(achieved)}</strong>
               <span className="advisor-goal-summary__target">
-                Meta mensual: {money(advisor.target)}
+                Meta mensual: {formatCOP(target)}
               </span>
               <div className="goal-track advisor-goal-track">
                 <span style={{ width: `${progress}%` }} />
               </div>
               <small>
-                Te faltan {money(advisor.target - advisor.achieved)} para
+                Te faltan {formatCOP(Math.max(0, target - achieved))} para
                 alcanzar tu meta.
               </small>
             </div>
@@ -143,30 +185,19 @@ export default function AsesorDashboard() {
               Ver CRM <ArrowRight aria-hidden="true" size={15} />
             </Button>
           </div>
-          <div className="advisor-pipeline-list">
-            {advisorPipeline.map((stage) => (
-              <div className="advisor-pipeline-stage" key={stage.stage}>
-                <div className="advisor-pipeline-stage__label">
-                  <span>
-                    <i style={{ background: stage.color }} />
-                    {stage.stage}
-                  </span>
-                  <strong>{stage.count}</strong>
-                </div>
-                <div className="advisor-pipeline-track">
-                  <span
-                    style={{
-                      background: stage.color,
-
-                      width: `${(stage.count / advisorPipeline[0].count) * 100}%`,
-                    }}
-                  />
-                </div>
-              </div>
-            ))}
+          <div className="h-52 min-w-0">
+            <ResponsiveContainer height="100%" width="100%">
+              <BarChart data={pipeline} margin={{ top: 8, right: 8, left: -20, bottom: 0 }}>
+                <XAxis axisLine={false} dataKey="stage" tickLine={false} />
+                <Tooltip />
+                <Bar dataKey="count" name="Prospectos" radius={[5, 5, 0, 0]}>
+                  {pipeline.map((stage) => <Cell fill={stage.color} key={stage.stage} />)}
+                </Bar>
+              </BarChart>
+            </ResponsiveContainer>
           </div>
           <div className="advisor-pipeline-total">
-            {advisorPipeline.reduce((total, stage) => total + stage.count, 0)}{" "}
+            {pipeline.reduce((total, stage) => total + stage.count, 0)}{" "}
             prospectos activos en tu embudo
           </div>
         </article>
@@ -265,6 +296,8 @@ export default function AsesorDashboard() {
           ))}
         </div>
       </section>
+      </>
+      )}
     </div>
   )
 }
